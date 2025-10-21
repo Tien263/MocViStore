@@ -116,7 +116,7 @@
                                         </div>
                                         <p class="bottom-area d-flex px-3">
                                             <a href="@Url.Action("Details", new { id = product.ProductId })" class="add-to-cart text-center py-2 mr-1"><span>Xem chi tiết <i class="fa fa-eye"></i></span></a>
-                                            <a href="#" class="buy-now text-center py-2">Mua ngay<span><i class="fa fa-shopping-cart"></i></span></a>
+                                            <a href="#" class="buy-now text-center py-2 btn-add-to-cart" data-product-id="@product.ProductId">Mua ngay<span><i class="fa fa-shopping-cart"></i></span></a>
                                         </p>
                                     </div>
                                 </div>
@@ -134,3 +134,56 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        $(document).ready(function(){
+            // Xử lý nút "Mua ngay"
+            $('.btn-add-to-cart').click(function(e){
+                e.preventDefault();
+                var productId = $(this).data('product-id');
+                
+                $.ajax({
+                    url: '@Url.Action("AddToCart", "Cart")',
+                    type: 'POST',
+                    data: { 
+                        productId: productId,
+                        quantity: 1
+                    },
+                    success: function(response) {
+                        if(response.success) {
+                            alert('Đã thêm sản phẩm vào giỏ hàng!');
+                            // Cập nhật số lượng giỏ hàng
+                            updateCartCount();
+                        } else {
+                            alert(response.message || 'Có lỗi xảy ra!');
+                            if(response.message && response.message.includes('đăng nhập')) {
+                                window.location.href = '@Url.Action("Login", "Auth")';
+                            }
+                        }
+                    },
+                    error: function() {
+                        alert('Có lỗi xảy ra. Vui lòng thử lại!');
+                    }
+                });
+            });
+            
+            // Hàm cập nhật số lượng giỏ hàng
+            function updateCartCount() {
+                $.ajax({
+                    url: '@Url.Action("GetCartCount", "Cart")',
+                    type: 'GET',
+                    success: function(count) {
+                        $('.cart-count').text(count);
+                        if(count > 0) {
+                            $('.cart-count').show();
+                        }
+                    }
+                });
+            }
+            
+            // Load số lượng giỏ hàng khi trang load
+            updateCartCount();
+        });
+    </script>
+}

@@ -156,6 +156,27 @@ namespace Exe_Demo.Controllers
             return Json(new { success = true });
         }
 
+        public async Task<IActionResult> GetCartCount()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return Json(0);
+            }
+
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null || user.CustomerId == null)
+            {
+                return Json(0);
+            }
+
+            var count = await _context.Carts
+                .Where(c => c.CustomerId == user.CustomerId)
+                .SumAsync(c => c.Quantity);
+
+            return Json(count);
+        }
+
         public IActionResult Checkout()
         {
             return View();
