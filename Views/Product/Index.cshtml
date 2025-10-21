@@ -1,0 +1,136 @@
+@model IEnumerable<Exe_Demo.Models.Product>
+@{
+    ViewData["Title"] = "Sản Phẩm";
+    var categories = ViewBag.Categories as List<Exe_Demo.Models.Category>;
+    var currentCategory = ViewBag.CurrentCategory as int?;
+    var currentSearch = ViewBag.CurrentSearch as string;
+    var currentSort = ViewBag.CurrentSort as string;
+}
+
+<div class="hero-wrap hero-bread" style="background-image: url('/images/bg_2.jpg');" data-stellar-background-ratio="0.5">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-center justify-content-center">
+            <div class="col-md-9 ftco-animate text-center">
+                <p class="breadcrumbs"><span class="mr-2"><a href="@Url.Action("Index", "Home")">Trang chủ</a></span> <span>Sản phẩm</span></p>
+                <h1 class="mb-0 bread">Sản Phẩm Hoa Quả Sấy</h1>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="ftco-section">
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar -->
+            <div class="col-lg-3 sidebar">
+                <!-- Categories -->
+                <div class="sidebar-box ftco-animate">
+                    <h3>Danh Mục</h3>
+                    <ul class="categories">
+                        <li><a href="@Url.Action("Index")" class="@(currentCategory == null ? "active" : "")">Tất cả <span>(@Model.Count())</span></a></li>
+                        @if (categories != null)
+                        {
+                            foreach (var cat in categories)
+                            {
+                                <li><a href="@Url.Action("Index", new { categoryId = cat.CategoryId })" class="@(currentCategory == cat.CategoryId ? "active" : "")">@cat.CategoryName</a></li>
+                            }
+                        }
+                    </ul>
+                </div>
+
+                <!-- Search -->
+                <div class="sidebar-box ftco-animate">
+                    <h3>Tìm Kiếm</h3>
+                    <form asp-action="Index" method="get" class="search-form">
+                        <div class="form-group">
+                            <input type="text" name="search" class="form-control" placeholder="Tìm sản phẩm..." value="@currentSearch">
+                            <button type="submit" class="btn btn-primary"><i class="fa fa-search"></i></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Products -->
+            <div class="col-lg-9">
+                <!-- Filter & Sort -->
+                <div class="row mb-4">
+                    <div class="col-md-12 d-flex justify-content-between align-items-center">
+                        <p class="text-muted">Hiển thị @Model.Count() sản phẩm</p>
+                        <div class="form-group mb-0">
+                            <select class="form-control" id="sortSelect" onchange="location = this.value;">
+                                <option value="@Url.Action("Index", new { categoryId = currentCategory, search = currentSearch })">Sắp xếp mặc định</option>
+                                <option value="@Url.Action("Index", new { categoryId = currentCategory, search = currentSearch, sortBy = "price_asc" })" selected="@(currentSort == "price_asc" ? "selected" : null)">Giá: Thấp đến Cao</option>
+                                <option value="@Url.Action("Index", new { categoryId = currentCategory, search = currentSearch, sortBy = "price_desc" })" selected="@(currentSort == "price_desc" ? "selected" : null)">Giá: Cao đến Thấp</option>
+                                <option value="@Url.Action("Index", new { categoryId = currentCategory, search = currentSearch, sortBy = "name" })" selected="@(currentSort == "name" ? "selected" : null)">Tên A-Z</option>
+                                <option value="@Url.Action("Index", new { categoryId = currentCategory, search = currentSearch, sortBy = "newest" })" selected="@(currentSort == "newest" ? "selected" : null)">Mới nhất</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                @if (Model.Any())
+                {
+                    <div class="row">
+                        @foreach (var product in Model)
+                        {
+                            <div class="col-md-6 col-lg-6 ftco-animate">
+                                <div class="product">
+                                    <a href="@Url.Action("Details", new { id = product.ProductId })" class="img-prod">
+                                        <img class="img-fluid" src="/images/prod-6.jpg" alt="@product.ProductName">
+                                        @if (product.IsNew == true)
+                                        {
+                                            <span class="status">Mới</span>
+                                        }
+                                        @if (product.DiscountPercent > 0)
+                                        {
+                                            <div class="overlay"></div>
+                                        }
+                                    </a>
+                                    <div class="text py-3 px-3">
+                                        <div class="d-flex">
+                                            <div class="cat">
+                                                <span>@product.Category.CategoryName</span>
+                                            </div>
+                                            @if (product.Rating > 0)
+                                            {
+                                                <div class="rating">
+                                                    @for (int i = 1; i <= 5; i++)
+                                                    {
+                                                        <i class="fa fa-star@(i <= product.Rating ? "" : "-o")"></i>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                        <h3><a href="@Url.Action("Details", new { id = product.ProductId })">@product.ProductName</a></h3>
+                                        <p class="mb-2">@product.Weight</p>
+                                        <div class="pricing">
+                                            <p class="price">
+                                                @if (product.OriginalPrice > product.Price)
+                                                {
+                                                    <span class="mr-2 price-dc">@product.OriginalPrice.Value.ToString("N0") đ</span>
+                                                }
+                                                <span class="price-sale">@product.Price.ToString("N0") đ</span>
+                                            </p>
+                                        </div>
+                                        <p class="bottom-area d-flex px-3">
+                                            <a href="@Url.Action("Details", new { id = product.ProductId })" class="add-to-cart text-center py-2 mr-1"><span>Xem chi tiết <i class="fa fa-eye"></i></span></a>
+                                            <a href="#" class="buy-now text-center py-2">Mua ngay<span><i class="fa fa-shopping-cart"></i></span></a>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-info">
+                        <i class="fa fa-info-circle"></i> Không tìm thấy sản phẩm nào.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
