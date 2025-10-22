@@ -153,20 +153,11 @@
                 <img src="~/images/logo_1.png" alt="Mộc Vị Logo" class="navbar-logo" style="max-height: 50px;">
             </a>
             
-            <div class="order-lg-last btn-group">
-                <a href="@Url.Action("Index", "Cart")" class="btn-cart dropdown-toggle dropdown-toggle-split" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <div class="order-lg-last">
+                <a href="@Url.Action("Index", "Cart")" class="btn-cart">
                     <span class="flaticon-shopping-bag"></span>
                     <div class="d-flex justify-content-center align-items-center"><small class="cart-count" style="display: none;">0</small></div>
                 </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <div class="dropdown-item text-center">
-                        <p class="mb-0">Giỏ hàng trống</p>
-                    </div>
-                    <a class="dropdown-item text-center btn-link d-block w-100" asp-controller="Cart" asp-action="Index">
-                        Xem giỏ hàng
-                        <span class="ion-ios-arrow-round-forward"></span>
-                    </a>
-                </div>
             </div>
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">

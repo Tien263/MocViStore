@@ -90,11 +90,18 @@ namespace Exe_Demo.Controllers
 
                     _logger.LogInformation($"User {user.Email} logged in.");
 
-                    // Redirect
+                    // Redirect based on role
                     if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     {
                         return Redirect(returnUrl);
                     }
+                    
+                    // Redirect Staff/Admin to Dashboard
+                    if (user.Role == "Staff" || user.Role == "Admin")
+                    {
+                        return RedirectToAction("Dashboard", "Staff");
+                    }
+                    
                     return RedirectToAction("Index", "Home");
                 }
 
