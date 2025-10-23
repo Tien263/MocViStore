@@ -276,3 +276,15 @@ wwwroot/uploads/profiles/*
 # App Settings (contains sensitive data)
 appsettings.Development.json
 appsettings.Production.json
+
+# AI Training Files
+Trainning_AI/.env
+Trainning_AI/venv/
+Trainning_AI/__pycache__/
+Trainning_AI/**/__pycache__/
+Trainning_AI/*.pkl
+Trainning_AI/chroma_db/
+
+# Sensitive scripts
+replace_secrets.sh
+replacements.txt

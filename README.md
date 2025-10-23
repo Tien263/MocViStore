@@ -46,6 +46,17 @@
 - ✅ Animation mượt mà
 - ✅ Font tiếng Việt chuẩn
 
+### 🤖 AI Chat Widget (MỚI!)
+- ✅ Trợ lý AI thông minh tư vấn sản phẩm 24/7
+- ✅ Floating button ở góc màn hình
+- ✅ Chat window đẹp mắt, responsive
+- ✅ Tích hợp Google Gemini AI
+- ✅ RAG (Retrieval-Augmented Generation) với vector database
+- ✅ Trả lời câu hỏi về sản phẩm, giá cả, dinh dưỡng
+- ✅ Lưu lịch sử chat tự động
+- ✅ Xóa lịch sử chat
+- ✅ Phát hiện câu hỏi ngoài phạm vi
+
 ## 🛠️ Công Nghệ Sử Dụng
 
 ### Backend
@@ -62,6 +73,13 @@
 - **Font Awesome**
 - **Owl Carousel**
 - **Magnific Popup**
+
+### AI System
+- **Framework**: FastAPI (Python)
+- **LLM**: Google Gemini 2.0 Flash
+- **Vector Store**: ChromaDB / SimpleVectorStore
+- **Embeddings**: Sentence Transformers
+- **Architecture**: RAG (Retrieval-Augmented Generation)
 
 ## 📁 Cấu Trúc Dự Án
 
@@ -97,12 +115,30 @@ Exe_Demo/
 ├── Services/
 │   └── EmailService.cs            # Service gửi email
 ├── wwwroot/
-│   ├── css/                       # CSS files
-│   ├── js/                        # JavaScript files
+│   ├── css/
+│   │   ├── style.css              # Main styles
+│   │   └── ai-chat.css            # AI Chat Widget styles
+│   ├── js/
+│   │   ├── main.js                # Main JavaScript
+│   │   └── ai-chat.js             # AI Chat Widget logic
 │   ├── images/                    # Hình ảnh
-│   └── uploads/                   # Upload files
-└── SQL_Scripts/
-    └── InsertProductsData.sql     # Script insert dữ liệu
+│   ├── uploads/                   # Upload files
+│   └── ai-chat-demo.html          # AI Chat demo page
+├── Trainning_AI/                  # AI System
+│   ├── app/
+│   │   ├── main.py                # FastAPI server
+│   │   ├── llm_service.py         # LLM integration
+│   │   ├── vector_store.py        # Vector database
+│   │   └── config.py              # Configuration
+│   ├── data/
+│   │   └── moc_chau_fruits.json   # Training data
+│   ├── requirements.txt           # Python dependencies
+│   └── .env                       # API keys (not in git)
+├── SQL_Scripts/
+│   └── InsertProductsData.sql     # Script insert dữ liệu
+├── clean-and-start-ai.bat         # Clean & start script
+├── start-with-ai.bat              # Quick start script
+└── stop-all.bat                   # Stop all services
 ```
 
 ## 📊 Database Schema
@@ -123,6 +159,8 @@ Exe_Demo/
 - .NET 8.0 SDK
 - SQL Server
 - Visual Studio 2022 hoặc VS Code
+- Python 3.8+ (cho AI system)
+- Google Gemini API Key (miễn phí)
 
 ### Các Bước Cài Đặt
 
@@ -174,15 +212,40 @@ sqlcmd -S localhost -d MocViStoreDB -i SQL_Scripts/InsertProductsData.sql -f 650
 }
 ```
 
-7. **Chạy ứng dụng**
+7. **Cấu hình AI System**
 ```bash
+cd Trainning_AI
+pip install -r requirements.txt
+```
+
+Tạo file `.env` trong folder `Trainning_AI`:
+```
+GEMINI_API_KEY=your-gemini-api-key-here
+```
+
+Lấy API key miễn phí tại: https://makersuite.google.com/app/apikey
+
+8. **Chạy ứng dụng với AI**
+
+**Option 1: Dùng script tự động (Khuyên dùng)**
+```bash
+clean-and-start-ai.bat
+```
+
+**Option 2: Chạy thủ công**
+```bash
+# Terminal 1 - AI Server
+cd Trainning_AI
+python -m app.main
+
+# Terminal 2 - Web App
 dotnet run
 ```
 
-8. **Truy cập**
-```
-http://localhost:5241
-```
+9. **Truy cập**
+- Website: http://localhost:5241
+- AI API Docs: http://localhost:8000/docs
+- AI Chat Demo: http://localhost:5241/ai-chat-demo.html
 
 ## 📦 Danh Sách Sản Phẩm
 
@@ -212,6 +275,12 @@ http://localhost:5241
 - Dâu Thăng Hoa Mini - 75,000đ
 - Sữa Chua Thăng Hoa Mini - 50,000đ
 
+## 📚 Documentation
+
+- [AI Chat Widget Guide](AI_CHAT_WIDGET_GUIDE.md) - Hướng dẫn chi tiết về AI Chat
+- [Quick Start AI Chat](QUICK_START_AI_CHAT.md) - Hướng dẫn nhanh
+- [Implementation Summary](AI_CHAT_IMPLEMENTATION_SUMMARY.md) - Tóm tắt triển khai
+
 ## 🎯 Tính Năng Sắp Tới
 
 - [ ] Thanh toán online (VNPay, Momo)
@@ -222,6 +291,8 @@ http://localhost:5241
 - [ ] Voucher và khuyến mãi
 - [ ] Admin dashboard
 - [ ] Báo cáo thống kê
+- [ ] Voice chat với AI
+- [ ] Multi-language AI support
 
 ## 📸 Screenshots
 
