@@ -128,11 +128,15 @@
                         @if (User.Identity?.IsAuthenticated == true)
                         {
                             <a asp-controller="Profile" asp-action="Index" class="mr-2" style="text-decoration: none;">
-                                Xin chào, @User.Identity.Name
+                                <i class="fa fa-user"></i> @User.Identity.Name
+                            </a>
+                            <span class="mx-1">|</span>
+                            <a asp-controller="Profile" asp-action="MyOrders" class="mr-2" style="text-decoration: none;">
+                                <i class="fa fa-shopping-bag"></i> Đơn hàng
                             </a>
                             <span class="mx-1">|</span>
                             <form asp-action="Logout" asp-controller="Auth" method="post" class="d-inline m-0">
-                                <button type="submit" class="btn-logout">Đăng Xuất</button>
+                                <button type="submit" class="btn-logout"><i class="fa fa-sign-out"></i> Đăng Xuất</button>
                             </form>
                         }
                         else

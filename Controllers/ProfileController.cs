@@ -221,5 +221,34 @@ namespace Exe_Demo.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        // GET: Profile/MyOrders
+        public async Task<IActionResult> MyOrders()
+        {
+            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            var user = await _context.Users
+                .Include(u => u.Customer)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            if (user == null || user.CustomerId == null)
+            {
+                return RedirectToAction("Login", "Auth");
+            }
+
+            // Lấy danh sách đơn hàng của khách hàng
+            var orders = await _context.Orders
+                .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Product)
+                .Where(o => o.CustomerId == user.CustomerId)
+                .OrderByDescending(o => o.CreatedDate)
+                .ToListAsync();
+
+            return View(orders);
+        }
     }
 }

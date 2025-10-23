@@ -52,6 +52,23 @@
         flex-direction: column;
     }
     
+    .product .img-prod {
+        position: relative;
+        display: block;
+        overflow: hidden;
+        width: 100%;
+        padding-top: 50%; /* Tỷ lệ 2:1 - chiều ngang rất rộng */
+    }
+    
+    .product .img-prod img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
     .product:hover {
         border-color: #4f6a4c;
         box-shadow: 0 5px 20px rgba(79, 106, 76, 0.2);
