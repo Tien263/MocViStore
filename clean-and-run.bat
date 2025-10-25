@@ -9,12 +9,9 @@ echo.
 
 REM Buoc 1: Dung process dang chay
 echo [1/4] Dung ung dung dang chay...
+taskkill /F /IM dotnet.exe >nul 2>&1
 taskkill /F /IM Exe_Demo.exe >nul 2>&1
-if %ERRORLEVEL% EQU 0 (
-    echo [OK] Da dung ung dung
-) else (
-    echo [OK] Khong co ung dung nao dang chay
-)
+echo [OK] Da dung tat ca process
 echo.
 
 REM Buoc 2: Clean project

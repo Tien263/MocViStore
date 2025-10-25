@@ -5,16 +5,10 @@ using Exe_Demo.Models;
 
 namespace Exe_Demo.Controllers
 {
-    public class ProductController : Controller
+    public class ProductController(ApplicationDbContext context, ILogger<ProductController> logger) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<ProductController> _logger;
-
-        public ProductController(ApplicationDbContext context, ILogger<ProductController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ProductController> _logger = logger;
 
         // GET: Product
         public async Task<IActionResult> Index(int? categoryId, string? search, string? sortBy)
@@ -34,7 +28,7 @@ namespace Exe_Demo.Controllers
             {
                 productsQuery = productsQuery.Where(p => 
                     p.ProductName.Contains(search) || 
-                    p.Description.Contains(search));
+                    (p.Description != null && p.Description.Contains(search)));
             }
 
             // Sort

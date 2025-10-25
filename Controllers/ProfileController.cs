@@ -8,16 +8,10 @@ using System.Security.Claims;
 namespace Exe_Demo.Controllers
 {
     [Authorize]
-    public class ProfileController : Controller
+    public class ProfileController(ApplicationDbContext context, ILogger<ProfileController> logger) : Controller
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<ProfileController> _logger;
-
-        public ProfileController(ApplicationDbContext context, ILogger<ProfileController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
+        private readonly ApplicationDbContext _context = context;
+        private readonly ILogger<ProfileController> _logger = logger;
 
         // GET: Profile/Index
         public async Task<IActionResult> Index()
@@ -126,7 +120,7 @@ namespace Exe_Demo.Controllers
             if (user.Customer != null)
             {
                 user.Customer.FullName = model.FullName;
-                user.Customer.PhoneNumber = model.PhoneNumber;
+                user.Customer.PhoneNumber = model.PhoneNumber ?? string.Empty;
                 user.Customer.Address = model.Address;
                 user.Customer.City = model.City;
                 user.Customer.District = model.District;
@@ -215,7 +209,7 @@ namespace Exe_Demo.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error uploading profile image: {ex.Message}");
+                _logger.LogError(ex, "Error uploading profile image");
                 TempData["ErrorMessage"] = "Có lỗi xảy ra khi upload ảnh!";
             }
 

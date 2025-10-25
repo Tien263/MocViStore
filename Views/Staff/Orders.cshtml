@@ -1,6 +1,7 @@
 @model Exe_Demo.Models.ViewModels.OrderManagementViewModel
 @{
     ViewData["Title"] = "Quản lý đơn hàng";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid py-4">
@@ -9,8 +10,11 @@
             <h2>Quản Lý Đơn Hàng</h2>
         </div>
         <div class="col-md-6 text-end">
+            <a asp-action="ExportOrders" class="btn btn-success me-2">
+                <i class="fa fa-file-excel-o"></i> Xuất/Nhập Excel
+            </a>
             <a asp-action="Dashboard" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại
+                <i class="fa fa-arrow-left"></i> Quay lại
             </a>
         </div>
     </div>
@@ -51,7 +55,7 @@
                     </div>
                     <div class="col-md-1">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i>
+                            <i class="fa fa-search"></i>
                         </button>
                     </div>
                 </div>
@@ -63,75 +67,79 @@
     <div class="card border-0 shadow-sm">
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead style="background: #4f6a4c; color: white;">
                         <tr>
-                            <th>Mã đơn</th>
-                            <th>Khách hàng</th>
-                            <th>Số điện thoại</th>
-                            <th>Loại đơn</th>
-                            <th>Tổng tiền</th>
-                            <th>Thanh toán</th>
-                            <th>Trạng thái</th>
-                            <th>Ngày tạo</th>
-                            <th>Thao tác</th>
+                            <th style="font-size: 15px; padding: 15px;">Mã Đơn</th>
+                            <th style="font-size: 15px; padding: 15px;">Khách Hàng</th>
+                            <th style="font-size: 15px; padding: 15px;">SĐT</th>
+                            <th style="font-size: 15px; padding: 15px;">Tổng Tiền</th>
+                            <th style="font-size: 15px; padding: 15px; text-align: center;">Thanh Toán</th>
+                            <th style="font-size: 15px; padding: 15px; text-align: center;">Trạng Thái</th>
+                            <th style="font-size: 15px; padding: 15px;">Ngày Đặt</th>
+                            <th style="font-size: 15px; padding: 15px; text-align: center;">Chi Tiết</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var order in Model.Orders)
                         {
-                            <tr>
-                                <td><strong>@order.OrderCode</strong></td>
-                                <td>@order.CustomerName</td>
-                                <td>@order.CustomerPhone</td>
-                                <td>
-                                    @if (order.OrderType == "Trực tiếp")
-                                    {
-                                        <span class="badge bg-info">@order.OrderType</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="badge bg-secondary">@order.OrderType</span>
-                                    }
+                            <tr style="border-bottom: 1px solid #e0e0e0;">
+                                <td style="padding: 15px; font-size: 14px;">
+                                    <strong style="color: #4f6a4c;">@order.OrderCode</strong>
                                 </td>
-                                <td><strong>@order.FinalAmount.ToString("N0") đ</strong></td>
-                                <td>
+                                <td style="padding: 15px; font-size: 14px;">
+                                    <strong>@order.CustomerName</strong>
+                                </td>
+                                <td style="padding: 15px; font-size: 14px;">
+                                    @order.CustomerPhone
+                                </td>
+                                <td style="padding: 15px; font-size: 16px;">
+                                    <strong style="color: #d9534f;">@order.FinalAmount.ToString("N0") đ</strong>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
                                     @if (order.PaymentStatus == "Đã thanh toán")
                                     {
-                                        <span class="badge bg-success">@order.PaymentStatus</span>
+                                        <span class="badge bg-success" style="font-size: 13px; padding: 8px 15px;">✓ Đã thanh toán</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-warning text-dark">@order.PaymentStatus</span>
+                                        <span class="badge bg-danger" style="font-size: 13px; padding: 8px 15px;">✗ Chưa thanh toán</span>
                                     }
                                 </td>
-                                <td>
+                                <td style="padding: 15px; text-align: center;">
                                     @if (order.OrderStatus == "Đã hoàn thành")
                                     {
-                                        <span class="badge bg-success">@order.OrderStatus</span>
+                                        <span class="badge bg-success" style="font-size: 13px; padding: 8px 15px;">✓ Hoàn thành</span>
                                     }
-                                    else if (order.OrderStatus == "Chờ xác nhận")
+                                    else if (order.OrderStatus == "Chờ xử lý")
                                     {
-                                        <span class="badge bg-warning text-dark">@order.OrderStatus</span>
+                                        <span class="badge bg-warning text-dark" style="font-size: 13px; padding: 8px 15px;">⏳ Chờ xử lý</span>
                                     }
-                                    else if (order.OrderStatus == "Đang xử lý" || order.OrderStatus == "Đang giao")
+                                    else if (order.OrderStatus == "Đang xử lý")
                                     {
-                                        <span class="badge bg-info">@order.OrderStatus</span>
+                                        <span class="badge bg-info" style="font-size: 13px; padding: 8px 15px;">🔄 Đang xử lý</span>
+                                    }
+                                    else if (order.OrderStatus == "Đang giao")
+                                    {
+                                        <span class="badge bg-primary" style="font-size: 13px; padding: 8px 15px;">🚚 Đang giao</span>
                                     }
                                     else if (order.OrderStatus == "Đã hủy")
                                     {
-                                        <span class="badge bg-danger">@order.OrderStatus</span>
+                                        <span class="badge bg-danger" style="font-size: 13px; padding: 8px 15px;">✗ Đã hủy</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">@order.OrderStatus</span>
+                                        <span class="badge bg-secondary" style="font-size: 13px; padding: 8px 15px;">@order.OrderStatus</span>
                                     }
                                 </td>
-                                <td>@order.CreatedDate?.ToString("dd/MM/yyyy HH:mm")</td>
-                                <td>
+                                <td style="padding: 15px; font-size: 14px;">
+                                    @order.CreatedDate?.ToString("dd/MM/yyyy")<br>
+                                    <small class="text-muted">@order.CreatedDate?.ToString("HH:mm")</small>
+                                </td>
+                                <td style="padding: 15px; text-align: center;">
                                     <a asp-action="OrderDetail" asp-route-id="@order.OrderId" 
-                                       class="btn btn-sm btn-outline-primary" title="Xem chi tiết">
-                                        <i class="fas fa-eye"></i>
+                                       class="btn btn-primary" style="padding: 8px 20px; font-size: 14px;" title="Xem chi tiết">
+                                        <i class="fa fa-eye"></i> Xem
                                     </a>
                                 </td>
                             </tr>

@@ -9,7 +9,7 @@ class Settings:
     
     # Server Config
     HOST = os.getenv("HOST", "0.0.0.0")
-    PORT = int(os.getenv("PORT", 8000))
+    PORT = int(os.getenv("PORT", 5000))
     
     # Database Config
     CHROMA_DB_PATH = "./chroma_db"
@@ -25,9 +25,11 @@ class Settings:
     TOP_K_RESULTS = 3
     
     # Data Paths - Multiple JSON files
-    DATA_PATH = "./data/moc_chau_fruits.json"  # Main products
-    BRAND_INFO_PATH = "./data/brand_info.json"
-    SEASONAL_CALENDAR_PATH = "./data/seasonal_calendar.json"
-    STORAGE_GUIDE_PATH = "./data/storage_guide.json"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.path.join(BASE_DIR, "..", "data")
+    DATA_PATH = os.path.join(DATA_DIR, "moc_chau_fruits.json")  # Main products
+    BRAND_INFO_PATH = os.path.join(DATA_DIR, "brand_info.json")
+    SEASONAL_CALENDAR_PATH = os.path.join(DATA_DIR, "seasonal_calendar.json")
+    STORAGE_GUIDE_PATH = os.path.join(DATA_DIR, "storage_guide.json")
 
 settings = Settings()

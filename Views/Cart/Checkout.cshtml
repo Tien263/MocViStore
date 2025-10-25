@@ -101,11 +101,55 @@
                                     <span>Phí vận chuyển</span>
                                     <span>Miễn phí</span>
                                 </p>
+                                
+                                <!-- Voucher Section -->
+                                <div class="mt-3 mb-3">
+                                    <label><i class="fa fa-ticket"></i> <strong>Mã giảm giá</strong></label>
+                                    <div class="input-group">
+                                        <input type="text" name="VoucherCode" id="voucherCode" class="form-control" placeholder="Nhập mã giảm giá">
+                                        <div class="input-group-append">
+                                            <button class="btn btn-outline-secondary" type="button" onclick="applyVoucher()">
+                                                <i class="fa fa-check"></i> Áp dụng
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">Nhập mã voucher để được giảm giá</small>
+                                    <div id="voucherMessage" class="mt-2"></div>
+                                </div>
+                                
+                                <p class="d-flex justify-content-between text-success" id="discountRow" style="display: none !important;">
+                                    <span><i class="fa fa-tag"></i> Giảm giá</span>
+                                    <span id="discountAmount">- 0 đ</span>
+                                </p>
+                                
+                                <!-- Loyalty Points Section -->
+                                <div class="mt-3 mb-3 p-3" style="background: #fff3cd; border-radius: 5px; border: 1px solid #ffc107;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <i class="fa fa-star text-warning"></i> <strong>Điểm tích lũy</strong>
+                                            <p class="mb-0 small text-muted">Bạn có: <strong class="text-warning">@(customer?.LoyaltyPoints ?? 0) điểm</strong></p>
+                                        </div>
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="usePoints" name="UsePoints">
+                                            <label class="custom-control-label" for="usePoints">Sử dụng điểm</label>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted">100 điểm = 10.000đ giảm giá</small>
+                                </div>
+                                
+                                <p class="d-flex justify-content-between text-info" id="pointsDiscountRow" style="display: none !important;">
+                                    <span><i class="fa fa-star"></i> Giảm từ điểm</span>
+                                    <span id="pointsDiscountAmount">- 0 đ</span>
+                                </p>
+                                
                                 <hr>
                                 <p class="d-flex justify-content-between" style="font-size: 20px; font-weight: 700; color: #4f6a4c;">
                                     <span>Tổng cộng</span>
-                                    <span>@total.Value.ToString("N0") đ</span>
+                                    <span id="finalTotal">@total.Value.ToString("N0") đ</span>
                                 </p>
+                                <input type="hidden" name="FinalAmount" id="finalAmountInput" value="@total.Value">
+                                <input type="hidden" name="VoucherCode" id="voucherCodeInput" value="">
+                                <input type="hidden" name="DiscountAmount" id="discountAmountInput" value="0">
                             </div>
                         </div>
                         
@@ -162,7 +206,18 @@
 
 @section Scripts {
     <script>
+        let originalTotal = @total.Value;
+        let voucherDiscount = 0;
+        let pointsDiscount = 0;
+        
         $(document).ready(function(){
+            // Log form data before submit
+            $('form').on('submit', function(e) {
+                console.log('Form submitting with:');
+                console.log('VoucherCode:', $('#voucherCodeInput').val());
+                console.log('DiscountAmount:', $('#discountAmountInput').val());
+                console.log('FinalAmount:', $('#finalAmountInput').val());
+            });
             $('#checkoutForm').submit(function(e){
                 if(!$('#terms').is(':checked')) {
                     e.preventDefault();
@@ -170,6 +225,63 @@
                     return false;
                 }
             });
+            
+            // Handle points checkbox
+            $('#usePoints').change(function(){
+                if($(this).is(':checked')) {
+                    let customerPoints = @(customer?.LoyaltyPoints ?? 0);
+                    pointsDiscount = Math.floor(customerPoints / 100) * 10000;
+                    $('#pointsDiscountRow').show();
+                    $('#pointsDiscountAmount').text('- ' + pointsDiscount.toLocaleString() + ' đ');
+                } else {
+                    pointsDiscount = 0;
+                    $('#pointsDiscountRow').hide();
+                }
+                updateTotal();
+            });
         });
+        
+        function applyVoucher() {
+            let voucherCode = $('#voucherCode').val().trim();
+            if(!voucherCode) {
+                $('#voucherMessage').html('<small class="text-danger">Vui lòng nhập mã voucher</small>');
+                return;
+            }
+            
+            // Call API to apply voucher
+            $.ajax({
+                url: '@Url.Action("ApplyVoucher", "Cart")',
+                method: 'POST',
+                data: { voucherCode: voucherCode },
+                success: function(response) {
+                    if(response.success) {
+                        voucherDiscount = response.discountAmount;
+                        $('#discountRow').show();
+                        $('#discountAmount').text('- ' + voucherDiscount.toLocaleString() + ' đ');
+                        $('#voucherMessage').html('<small class="text-success"><i class="fa fa-check"></i> ' + response.message + '</small>');
+                        
+                        // Lưu voucher code và discount amount vào hidden inputs
+                        $('#voucherCodeInput').val(response.voucherCode);
+                        $('#discountAmountInput').val(voucherDiscount);
+                        
+                        updateTotal();
+                    } else {
+                        $('#voucherMessage').html('<small class="text-danger"><i class="fa fa-times"></i> ' + response.message + '</small>');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Voucher error:', error);
+                    $('#voucherMessage').html('<small class="text-danger">Lỗi khi áp dụng voucher. Vui lòng thử lại.</small>');
+                }
+            });
+        }
+        
+        function updateTotal() {
+            let finalTotal = originalTotal - voucherDiscount - pointsDiscount;
+            if(finalTotal < 0) finalTotal = 0;
+            
+            $('#finalTotal').text(finalTotal.toLocaleString() + ' đ');
+            $('#finalAmountInput').val(finalTotal);
+        }
     </script>
 }

@@ -35,6 +35,21 @@ builder.Services.AddAuthentication(options =>
         options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
         options.CallbackPath = "/signin-google";
         options.SaveTokens = true;
+        
+        // Handle correlation failures
+        options.Events.OnRemoteFailure = context =>
+        {
+            if (context.Failure?.Message.Contains("Correlation failed") == true)
+            {
+                context.Response.Redirect("/Auth/Login?error=correlation");
+                context.HandleResponse();
+            }
+            return Task.CompletedTask;
+        };
+        
+        // Improve cookie settings
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
     });
 
 // Add Session

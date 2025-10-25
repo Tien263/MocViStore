@@ -1,19 +1,20 @@
 @model Exe_Demo.Models.ViewModels.ProductManagementViewModel
 @{
     ViewData["Title"] = "Quản lý sản phẩm";
+    Layout = "~/Views/Shared/_StaffLayout.cshtml";
 }
 
 <div class="container-fluid py-4">
     <div class="row mb-4">
         <div class="col-md-6">
-            <h2>Quản Lý Sản Phẩm</h2>
+            <h2 style="font-weight: 700; color: #2d3e2a;"><i class="fa fa-cube"></i> Quản Lý Sản Phẩm</h2>
         </div>
         <div class="col-md-6 text-end">
             <a asp-action="CreateProduct" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Thêm Sản Phẩm Mới
+                <i class="fa fa-plus"></i> Thêm Sản Phẩm Mới
             </a>
             <a asp-action="Dashboard" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại
+                <i class="fa fa-arrow-left"></i> Quay lại
             </a>
         </div>
     </div>
@@ -47,7 +48,7 @@
                     </div>
                     <div class="col-md-2">
                         <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-search"></i> Tìm kiếm
+                            <i class="fa fa-search"></i> Tìm kiếm
                         </button>
                     </div>
                 </div>
@@ -60,17 +61,17 @@
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                    <thead style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
                         <tr>
-                            <th style="width: 80px;">Hình ảnh</th>
-                            <th>Mã SP</th>
-                            <th>Tên sản phẩm</th>
-                            <th>Danh mục</th>
-                            <th>Giá bán</th>
-                            <th>Tồn kho</th>
-                            <th>Đã bán</th>
-                            <th>Trạng thái</th>
-                            <th style="width: 150px;">Thao tác</th>
+                            <th style="width: 80px; color: white; font-weight: 700; border: none;"><i class="fa fa-image"></i> Hình ảnh</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-barcode"></i> Mã SP</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-tag"></i> Tên sản phẩm</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-folder"></i> Danh mục</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-money"></i> Giá bán</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-cubes"></i> Tồn kho</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-shopping-cart"></i> Đã bán</th>
+                            <th style="color: white; font-weight: 700; border: none;"><i class="fa fa-toggle-on"></i> Trạng thái</th>
+                            <th style="width: 150px; color: white; font-weight: 700; border: none;"><i class="fa fa-cog"></i> Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -100,36 +101,36 @@
                                 <td>
                                     @if (product.StockQuantity == 0)
                                     {
-                                        <span class="badge bg-danger">Hết hàng</span>
+                                        <span class="badge bg-danger" style="color: white; font-weight: 600;">Hết hàng</span>
                                     }
                                     else if (product.StockQuantity <= product.MinStockLevel)
                                     {
-                                        <span class="badge bg-warning text-dark">@product.StockQuantity</span>
+                                        <span class="badge bg-warning" style="color: #000; font-weight: 600;">@product.StockQuantity</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-success">@product.StockQuantity</span>
+                                        <span class="badge bg-success" style="color: white; font-weight: 600;">@product.StockQuantity</span>
                                     }
                                 </td>
                                 <td>@(product.SoldCount ?? 0)</td>
                                 <td>
                                     @if (product.IsActive == true)
                                     {
-                                        <span class="badge bg-success">Hoạt động</span>
+                                        <span class="badge bg-success" style="color: white; font-weight: 600;">Hoạt động</span>
                                     }
                                     else
                                     {
-                                        <span class="badge bg-secondary">Ẩn</span>
+                                        <span class="badge bg-secondary" style="color: #000; font-weight: 600; background-color: #d3d3d3 !important;">Ẩn</span>
                                     }
                                 </td>
                                 <td>
                                     <a asp-action="EditProduct" asp-route-id="@product.ProductId" 
                                        class="btn btn-sm btn-outline-primary" title="Sửa">
-                                        <i class="fas fa-edit"></i>
+                                        <i class="fa fa-edit"></i>
                                     </a>
                                     <button type="button" class="btn btn-sm btn-outline-danger" 
                                             onclick="deleteProduct(@product.ProductId)" title="Xóa">
-                                        <i class="fas fa-trash"></i>
+                                        <i class="fa fa-trash"></i>
                                     </button>
                                 </td>
                             </tr>

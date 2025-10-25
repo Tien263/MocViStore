@@ -16,51 +16,51 @@ public partial class ApplicationDbContext : DbContext
     {
     }
 
-    public virtual DbSet<Blog> Blogs { get; set; }
+    public required virtual DbSet<Blog> Blogs { get; set; }
 
-    public virtual DbSet<BlogComment> BlogComments { get; set; }
+    public required virtual DbSet<BlogComment> BlogComments { get; set; }
 
-    public virtual DbSet<Cart> Carts { get; set; }
+    public required virtual DbSet<Cart> Carts { get; set; }
 
-    public virtual DbSet<Category> Categories { get; set; }
+    public required virtual DbSet<Category> Categories { get; set; }
 
-    public virtual DbSet<ContactMessage> ContactMessages { get; set; }
+    public required virtual DbSet<ContactMessage> ContactMessages { get; set; }
 
-    public virtual DbSet<Customer> Customers { get; set; }
+    public required virtual DbSet<Customer> Customers { get; set; }
 
-    public virtual DbSet<Employee> Employees { get; set; }
+    public required virtual DbSet<Employee> Employees { get; set; }
 
-    public virtual DbSet<Expense> Expenses { get; set; }
+    public required virtual DbSet<Expense> Expenses { get; set; }
 
-    public virtual DbSet<InventoryTransaction> InventoryTransactions { get; set; }
+    public required virtual DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
-    public virtual DbSet<LoyaltyPointsHistory> LoyaltyPointsHistories { get; set; }
+    public required virtual DbSet<LoyaltyPointsHistory> LoyaltyPointsHistories { get; set; }
 
-    public virtual DbSet<Order> Orders { get; set; }
+    public required virtual DbSet<Order> Orders { get; set; }
 
-    public virtual DbSet<OrderDetail> OrderDetails { get; set; }
+    public required virtual DbSet<OrderDetail> OrderDetails { get; set; }
 
-    public virtual DbSet<Payment> Payments { get; set; }
+    public required virtual DbSet<Payment> Payments { get; set; }
 
-    public virtual DbSet<Product> Products { get; set; }
+    public required virtual DbSet<Product> Products { get; set; }
 
-    public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+    public required virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
 
-    public virtual DbSet<PurchaseOrderDetail> PurchaseOrderDetails { get; set; }
+    public required virtual DbSet<PurchaseOrderDetail> PurchaseOrderDetails { get; set; }
 
-    public virtual DbSet<Review> Reviews { get; set; }
+    public required virtual DbSet<Review> Reviews { get; set; }
 
-    public virtual DbSet<Setting> Settings { get; set; }
+    public required virtual DbSet<Setting> Settings { get; set; }
 
-    public virtual DbSet<Shift> Shifts { get; set; }
+    public required virtual DbSet<Shift> Shifts { get; set; }
 
-    public virtual DbSet<Supplier> Suppliers { get; set; }
+    public required virtual DbSet<Supplier> Suppliers { get; set; }
 
-    public virtual DbSet<User> Users { get; set; }
+    public required virtual DbSet<User> Users { get; set; }
 
-    public virtual DbSet<Voucher> Vouchers { get; set; }
+    public required virtual DbSet<Voucher> Vouchers { get; set; }
 
-    public virtual DbSet<OtpVerification> OtpVerifications { get; set; }
+    public required virtual DbSet<OtpVerification> OtpVerifications { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {

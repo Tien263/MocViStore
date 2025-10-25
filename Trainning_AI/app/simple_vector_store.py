@@ -94,8 +94,17 @@ class SimpleVectorStore:
         if json_path is None:
             json_path = settings.DATA_PATH
         
+        print(f"[DEBUG] Trying to load data from: {json_path}")
+        print(f"[DEBUG] File exists: {os.path.exists(json_path)}")
+        
+        if not os.path.exists(json_path):
+            print(f"[ERROR] File not found: {json_path}")
+            return 0
+        
         with open(json_path, 'r', encoding='utf-8') as f:
             data = json.load(f)
+        
+        print(f"[DEBUG] Loaded data type: {type(data)}")
         
         # Check if data is array or single object
         if isinstance(data, list):

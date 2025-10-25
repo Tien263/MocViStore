@@ -6,6 +6,13 @@ from pydantic import BaseModel
 from typing import Optional, List
 import json
 import os
+import sys
+
+# Set UTF-8 encoding for console output
+if sys.platform == 'win32':
+    import codecs
+    sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
+    sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
 try:
     from app.vector_store import VectorStore
@@ -46,9 +53,14 @@ if os.path.exists(static_path):
     app.mount("/static", StaticFiles(directory=static_path), name="static")
 
 # Pydantic models
+class Message(BaseModel):
+    role: str  # 'user' or 'assistant'
+    content: str
+
 class QueryRequest(BaseModel):
     question: str
     top_k: Optional[int] = 3
+    conversation_history: Optional[List[Message]] = []
 
 class QueryResponse(BaseModel):
     answer: str
@@ -72,14 +84,20 @@ class StatusResponse(BaseModel):
 @app.on_event("startup")
 async def startup_event():
     """Load dữ liệu khi khởi động server"""
+    print("[STARTUP] Starting to load data...")
+    print(f"[STARTUP] DATA_PATH: {settings.DATA_PATH}")
+    print(f"[STARTUP] File exists: {os.path.exists(settings.DATA_PATH)}")
+    
     try:
-        if os.path.exists(settings.DATA_PATH):
-            count = vector_store.load_data_from_json()
-            print(f"[OK] Da load {count} documents vao vector store")
-        else:
-            print("[WARNING] Chua co file du lieu. Vui long them du lieu.")
+        count = vector_store.load_data_from_json()
+        print(f"[OK] Da load {count} documents vao vector store")
+        
+        if count == 0:
+            print("[WARNING] Khong co document nao duoc load!")
     except Exception as e:
         print(f"[ERROR] Loi khi load du lieu: {e}")
+        import traceback
+        traceback.print_exc()
 
 
 @app.get("/")
@@ -119,6 +137,13 @@ async def chat(request: QueryRequest):
     Endpoint chính để chat với AI
     """
     try:
+        # Debug: Print conversation history
+        print(f"\n[DEBUG] Question: {request.question}")
+        print(f"[DEBUG] History length: {len(request.conversation_history) if request.conversation_history else 0}")
+        if request.conversation_history:
+            for i, msg in enumerate(request.conversation_history[-3:]):
+                print(f"  [{i}] {msg.role}: {msg.content[:50]}...")
+        
         # Tìm kiếm thông tin liên quan
         search_results = vector_store.search(request.question, request.top_k)
         
@@ -128,8 +153,12 @@ async def chat(request: QueryRequest):
                 sources=[]
             )
         
-        # Tạo câu trả lời bằng LLM
-        answer = llm_service.generate_response(request.question, search_results)
+        # Tạo câu trả lời bằng LLM với conversation history
+        answer = llm_service.generate_response(
+            request.question, 
+            search_results,
+            conversation_history=request.conversation_history
+        )
         
         # Format sources
         sources = [
@@ -215,6 +244,23 @@ async def get_all_fruits():
 if __name__ == "__main__":
     import uvicorn
     import os
+    
+    # Load data before starting server
+    print("\n" + "="*50)
+    print("LOADING DATA...")
+    print("="*50)
+    print(f"DATA_PATH: {settings.DATA_PATH}")
+    print(f"File exists: {os.path.exists(settings.DATA_PATH)}")
+    
+    try:
+        count = vector_store.load_data_from_json()
+        print(f"✓ Loaded {count} documents successfully!")
+    except Exception as e:
+        print(f"✗ Error loading data: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    print("="*50 + "\n")
     
     # Support cloud deployment with PORT env variable
     port = int(os.getenv("PORT", settings.PORT))

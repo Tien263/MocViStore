@@ -183,6 +183,117 @@ namespace Exe_Demo.Controllers
             return Json(count);
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ApplyVoucher(string voucherCode)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(voucherCode))
+                {
+                    return Json(new { success = false, message = "Vui lòng nhập mã voucher" });
+                }
+
+                // Tìm voucher
+                var voucher = await _context.Vouchers
+                    .FirstOrDefaultAsync(v => v.VoucherCode.ToUpper() == voucherCode.ToUpper());
+
+                if (voucher == null)
+                {
+                    return Json(new { success = false, message = "Mã voucher không tồn tại" });
+                }
+
+                // Kiểm tra voucher có active không
+                if (voucher.IsActive != true)
+                {
+                    return Json(new { success = false, message = "Mã voucher không còn hiệu lực" });
+                }
+
+                // Kiểm tra thời gian hiệu lực
+                var now = DateTime.Now;
+                if (voucher.ValidFrom.HasValue && now < voucher.ValidFrom.Value)
+                {
+                    return Json(new { success = false, message = "Mã voucher chưa đến thời gian sử dụng" });
+                }
+
+                if (voucher.ValidTo.HasValue && now > voucher.ValidTo.Value)
+                {
+                    return Json(new { success = false, message = "Mã voucher đã hết hạn" });
+                }
+
+                // Kiểm tra số lần sử dụng
+                if (voucher.UsageLimit.HasValue && voucher.UsageLimit > 0)
+                {
+                    if (voucher.UsedCount >= voucher.UsageLimit)
+                    {
+                        return Json(new { success = false, message = "Mã voucher đã hết lượt sử dụng" });
+                    }
+                }
+
+                // Lấy tổng tiền giỏ hàng
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+                {
+                    return Json(new { success = false, message = "Vui lòng đăng nhập" });
+                }
+
+                var user = await _context.Users.FindAsync(userId);
+                if (user == null || user.CustomerId == null)
+                {
+                    return Json(new { success = false, message = "Không tìm thấy thông tin khách hàng" });
+                }
+
+                var cartItems = await _context.Carts
+                    .Include(c => c.Product)
+                    .Where(c => c.CustomerId == user.CustomerId)
+                    .ToListAsync();
+
+                decimal totalAmount = cartItems.Sum(c => c.Quantity * c.Product.Price);
+
+                // Kiểm tra đơn hàng tối thiểu
+                if (voucher.MinOrderAmount.HasValue && totalAmount < voucher.MinOrderAmount.Value)
+                {
+                    return Json(new { 
+                        success = false, 
+                        message = $"Đơn hàng tối thiểu {voucher.MinOrderAmount.Value:N0}đ để sử dụng mã này" 
+                    });
+                }
+
+                // Tính giảm giá
+                decimal discountAmount = 0;
+                if (voucher.DiscountType == "Percent")
+                {
+                    discountAmount = totalAmount * voucher.DiscountValue / 100;
+                    
+                    // Áp dụng giảm tối đa nếu có
+                    if (voucher.MaxDiscountAmount.HasValue && discountAmount > voucher.MaxDiscountAmount.Value)
+                    {
+                        discountAmount = voucher.MaxDiscountAmount.Value;
+                    }
+                }
+                else if (voucher.DiscountType == "Fixed")
+                {
+                    discountAmount = voucher.DiscountValue;
+                }
+
+                decimal finalAmount = totalAmount - discountAmount;
+                if (finalAmount < 0) finalAmount = 0;
+
+                return Json(new { 
+                    success = true, 
+                    message = "Áp dụng mã giảm giá thành công",
+                    voucherCode = voucher.VoucherCode,
+                    voucherName = voucher.VoucherName,
+                    discountAmount = discountAmount,
+                    finalAmount = finalAmount
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error applying voucher: {ex.Message}");
+                return Json(new { success = false, message = "Có lỗi xảy ra khi áp dụng voucher" });
+            }
+        }
+
         public async Task<IActionResult> Checkout()
         {
             // Kiểm tra đăng nhập
@@ -230,7 +341,7 @@ namespace Exe_Demo.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PlaceOrder(string FullName, string Phone, string Email, string Address, string Note, string PaymentMethod)
+        public async Task<IActionResult> PlaceOrder(string FullName, string Phone, string Email, string Address, string Note, string PaymentMethod, string? VoucherCode, decimal? DiscountAmount, decimal? FinalAmount)
         {
             // Kiểm tra đăng nhập
             var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -261,6 +372,10 @@ namespace Exe_Demo.Controllers
 
             // Tính tổng tiền
             decimal totalAmount = cartItems.Sum(c => c.Quantity * c.Product.Price);
+            
+            // Áp dụng giảm giá từ voucher nếu có
+            decimal finalOrderAmount = FinalAmount ?? totalAmount;
+            decimal discountApplied = DiscountAmount ?? 0;
 
             // Tạo đơn hàng
             var order = new Models.Order
@@ -272,13 +387,24 @@ namespace Exe_Demo.Controllers
                 CustomerPhone = Phone,
                 ShippingAddress = Address,
                 TotalAmount = totalAmount,
-                FinalAmount = totalAmount,
+                FinalAmount = finalOrderAmount,
                 PaymentMethod = PaymentMethod,
                 PaymentStatus = PaymentMethod == "COD" ? "Pending" : "Pending",
                 OrderStatus = "Pending",
                 Note = Note,
                 CreatedDate = DateTime.Now
             };
+            
+            // Cập nhật voucher usage nếu có
+            if (!string.IsNullOrEmpty(VoucherCode))
+            {
+                var voucher = await _context.Vouchers
+                    .FirstOrDefaultAsync(v => v.VoucherCode == VoucherCode);
+                if (voucher != null)
+                {
+                    voucher.UsedCount = (voucher.UsedCount ?? 0) + 1;
+                }
+            }
 
             _context.Orders.Add(order);
             await _context.SaveChangesAsync();
@@ -331,7 +457,13 @@ namespace Exe_Demo.Controllers
             }
             else if (PaymentMethod == "COD")
             {
-                TempData["SuccessMessage"] = $"Đặt hàng thành công! Mã đơn hàng: #{order.OrderCode}. Chúng tôi sẽ liên hệ với bạn sớm nhất. Thông tin chi tiết đã được gửi qua email.";
+                // Tính điểm sẽ nhận được
+                int pointsToEarn = (int)(order.FinalAmount / 10000);
+                string pointsMessage = pointsToEarn > 0 
+                    ? $" Sau khi giao hàng thành công, bạn sẽ nhận được {pointsToEarn} điểm tích lũy (10.000đ = 1 điểm)." 
+                    : "";
+                
+                TempData["SuccessMessage"] = $"Đặt hàng thành công! Mã đơn hàng: #{order.OrderCode}. Chúng tôi sẽ liên hệ với bạn sớm nhất. Thông tin chi tiết đã được gửi qua email.{pointsMessage}";
                 return RedirectToAction("Index", "Home");
             }
 

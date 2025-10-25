@@ -195,7 +195,14 @@ class AIChatWidget {
         this.showTypingIndicator();
         
         try {
-            // Call AI API
+            // Prepare conversation history (last 8 messages for context, excluding current message)
+            // We need to exclude the current user message that was just added
+            const conversationHistory = this.messages.slice(-8, -1).map(msg => ({
+                role: msg.type === 'user' ? 'user' : 'assistant',
+                content: msg.content
+            }));
+            
+            // Call AI API with conversation history
             const response = await fetch(this.apiUrl, {
                 method: 'POST',
                 headers: {
@@ -203,7 +210,8 @@ class AIChatWidget {
                 },
                 body: JSON.stringify({
                     question: message,
-                    top_k: 3
+                    top_k: 3,
+                    conversation_history: conversationHistory
                 })
             });
             

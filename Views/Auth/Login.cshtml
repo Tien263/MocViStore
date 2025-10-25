@@ -325,6 +325,14 @@
                 </div>
             }
 
+            @if (Context.Request.Query["error"] == "correlation")
+            {
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Phiên đăng nhập đã hết hạn. Vui lòng thử lại.
+                </div>
+            }
+
             @if (!ViewData.ModelState.IsValid)
             {
                 <div class="alert alert-danger">
