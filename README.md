@@ -32,12 +32,60 @@
 - ✅ Sản phẩm liên quan
 - ✅ Rating và đánh giá
 
-### 🛒 Giỏ Hàng
+### 🛒 Giỏ Hàng & Thanh Toán
 - ✅ Thêm sản phẩm vào giỏ hàng
 - ✅ Cập nhật số lượng
 - ✅ Xóa sản phẩm khỏi giỏ
 - ✅ Tính tổng tiền tự động
 - ✅ Lưu giỏ hàng vào database
+- ✅ Checkout với thông tin đầy đủ
+- ✅ Thanh toán COD hoặc chuyển khoản ngân hàng
+- ✅ QR Code thanh toán tự động (VietQR)
+- ✅ Email xác nhận đơn hàng
+
+### 🎫 Hệ Thống Voucher (MỚI!)
+- ✅ Tạo và quản lý voucher giảm giá
+- ✅ 2 loại voucher: Phần trăm (%) và Số tiền cố định (đ)
+- ✅ Thiết lập đơn hàng tối thiểu
+- ✅ Giảm giá tối đa cho voucher phần trăm
+- ✅ Giới hạn số lần sử dụng
+- ✅ Thời gian hiệu lực (từ ngày - đến ngày)
+- ✅ Trạng thái active/inactive
+- ✅ Áp dụng voucher tại trang checkout
+- ✅ Validation đầy đủ (tồn tại, hết hạn, đủ điều kiện)
+- ✅ Tự động cập nhật số lần đã sử dụng
+- ✅ Hiển thị chi tiết giảm giá trên hóa đơn
+
+### ⭐ Hệ Thống Điểm Tích Lũy
+- ✅ Tích điểm khi mua hàng (10,000đ = 1 điểm)
+- ✅ Sử dụng điểm để giảm giá (100 điểm = 10,000đ)
+- ✅ Hiển thị điểm hiện có trên profile
+- ✅ Lịch sử tích điểm
+
+### 📊 Quản Lý Staff/Admin (MỚI!)
+- ✅ Dashboard với thống kê tổng quan
+- ✅ Quản lý sản phẩm (CRUD)
+- ✅ Quản lý đơn hàng với nhiều trạng thái
+- ✅ Quản lý voucher (CRUD)
+- ✅ Quản lý điểm tích lũy khách hàng
+- ✅ Quản lý blog
+- ✅ Bán hàng trực tiếp (Direct Sale)
+- ✅ Báo cáo doanh số
+- ✅ Export đơn hàng ra Excel
+- ✅ Import cập nhật đơn hàng từ Excel
+- ✅ Giao diện hiện đại với menu dropdown
+- ✅ Icons đầy đủ và màu sắc rõ ràng
+
+### 📑 Excel Export/Import (MỚI!)
+- ✅ Export đơn hàng với 13 cột thông tin
+- ✅ Checkbox trạng thái thanh toán (Đã/Chưa thanh toán)
+- ✅ Checkbox trạng thái đơn hàng (Chờ xử lý, Đang xử lý, Đang giao, Hoàn thành, Hủy)
+- ✅ Font Segoe UI Symbol cho checkbox đẹp (☐/☑)
+- ✅ Import để cập nhật trạng thái hàng loạt
+- ✅ Validation khi import
+- ✅ Header màu xanh đặc trưng
+- ✅ Auto-fit columns
+- ✅ Border và styling chuyên nghiệp
 
 ### 🎨 Giao Diện
 - ✅ Responsive design (Desktop, Tablet, Mobile)
@@ -63,8 +111,10 @@
 - **Framework**: ASP.NET Core 8.0 MVC
 - **Database**: SQL Server
 - **ORM**: Entity Framework Core
-- **Authentication**: ASP.NET Core Identity, Google OAuth
+- **Authentication**: ASP.NET Core Identity, Google OAuth 2.0
 - **Email Service**: SMTP (Gmail)
+- **Excel Processing**: EPPlus (Export/Import)
+- **Payment**: VietQR API Integration
 
 ### Frontend
 - **HTML5, CSS3, JavaScript**
@@ -89,7 +139,8 @@ Exe_Demo/
 │   ├── AuthController.cs          # Xác thực, đăng ký, đăng nhập
 │   ├── ProfileController.cs       # Quản lý profile
 │   ├── ProductController.cs       # Quản lý sản phẩm
-│   ├── CartController.cs          # Giỏ hàng
+│   ├── CartController.cs          # Giỏ hàng & Voucher
+│   ├── StaffController.cs         # Quản lý Staff/Admin
 │   ├── HomeController.cs          # Trang chủ
 │   ├── AboutController.cs         # Giới thiệu
 │   ├── BlogController.cs          # Blog
@@ -101,19 +152,34 @@ Exe_Demo/
 │   ├── Category.cs                # Model danh mục
 │   ├── Cart.cs                    # Model giỏ hàng
 │   ├── Order.cs                   # Model đơn hàng
+│   ├── OrderDetail.cs             # Chi tiết đơn hàng
+│   ├── Voucher.cs                 # Model voucher
+│   ├── LoyaltyPoint.cs            # Điểm tích lũy
 │   └── ViewModels/                # ViewModels
 ├── Views/
 │   ├── Shared/
-│   │   └── _Layout.cshtml         # Layout chung
+│   │   ├── _Layout.cshtml         # Layout chung
+│   │   └── _StaffLayout.cshtml    # Layout Staff/Admin
 │   ├── Auth/                      # Views xác thực
 │   ├── Profile/                   # Views profile
 │   ├── Product/                   # Views sản phẩm
-│   ├── Cart/                      # Views giỏ hàng
+│   ├── Cart/                      # Views giỏ hàng & checkout
+│   ├── Staff/                     # Views Staff/Admin
+│   │   ├── Dashboard.cshtml       # Dashboard
+│   │   ├── Products.cshtml        # Quản lý sản phẩm
+│   │   ├── Orders.cshtml          # Quản lý đơn hàng
+│   │   ├── Vouchers.cshtml        # Quản lý voucher
+│   │   ├── CreateVoucher.cshtml   # Tạo voucher
+│   │   ├── EditVoucher.cshtml     # Sửa voucher
+│   │   └── ExportOrders.cshtml    # Export Excel
 │   └── Home/                      # Views trang chủ
 ├── Data/
 │   └── ApplicationDbContext.cs    # Database context
 ├── Services/
-│   └── EmailService.cs            # Service gửi email
+│   ├── EmailService.cs            # Service gửi email
+│   └── ExcelOrderService.cs       # Service Excel Export/Import
+├── Helpers/
+│   └── StaffAccountHelper.cs      # Helper tạo tài khoản staff
 ├── wwwroot/
 │   ├── css/
 │   │   ├── style.css              # Main styles
@@ -123,22 +189,45 @@ Exe_Demo/
 │   │   └── ai-chat.js             # AI Chat Widget logic
 │   ├── images/                    # Hình ảnh
 │   ├── uploads/                   # Upload files
+│   ├── test-voucher.html          # Test voucher API
+│   ├── test-chat.html             # Test AI chat
 │   └── ai-chat-demo.html          # AI Chat demo page
 ├── Trainning_AI/                  # AI System
 │   ├── app/
 │   │   ├── main.py                # FastAPI server
 │   │   ├── llm_service.py         # LLM integration
-│   │   ├── vector_store.py        # Vector database
-│   │   └── config.py              # Configuration
+│   │   ├── simple_vector_store.py # Vector database
+│   │   ├── config.py              # Configuration
+│   │   └── training_data.json     # Training data
 │   ├── data/
-│   │   └── moc_chau_fruits.json   # Training data
+│   │   ├── moc_chau_fruits.json   # Sản phẩm data
+│   │   ├── brand_info.json        # Thông tin thương hiệu
+│   │   └── seasonal_calendar.json # Lịch mùa vụ
 │   ├── requirements.txt           # Python dependencies
 │   └── .env                       # API keys (not in git)
 ├── SQL_Scripts/
-│   └── InsertProductsData.sql     # Script insert dữ liệu
-├── clean-and-start-ai.bat         # Clean & start script
-├── start-with-ai.bat              # Quick start script
-└── stop-all.bat                   # Stop all services
+│   ├── InsertProductsData.sql     # Insert sản phẩm
+│   ├── InsertVouchers.sql         # Insert vouchers
+│   ├── CreateVouchers_Simple.sql  # Tạo voucher test
+│   ├── CreateTestVoucher.sql      # Voucher không tối thiểu
+│   ├── QuickCreateStaff.sql       # Tạo tài khoản staff
+│   ├── DeleteCustomers.sql        # Xóa customers test
+│   └── DeleteOrders.sql           # Xóa orders test
+├── Database/
+│   ├── MocViStore_Complete.sql    # Full database script
+│   └── DATABASE_STRUCTURE.md      # Tài liệu cấu trúc DB
+├── clean-and-run.bat              # Clean & run web only
+├── clean-and-start-ai.bat         # Clean & start with AI
+├── clean-and-start-all.bat        # Clean & start all
+├── start-with-ai.bat              # Quick start with AI
+├── start-all.bat                  # Start all services
+├── run.bat                        # Run web only
+├── start-ai.bat                   # Start AI only
+├── stop.bat                       # Stop web
+├── stop-all.bat                   # Stop all services
+├── QUICK_START.md                 # Hướng dẫn nhanh
+├── SCRIPTS_README.md              # Tài liệu SQL scripts
+└── README.md                      # File này
 ```
 
 ## 📊 Database Schema
@@ -151,6 +240,11 @@ Exe_Demo/
 - **Carts**: Giỏ hàng
 - **Orders**: Đơn hàng
 - **OrderDetails**: Chi tiết đơn hàng
+- **Vouchers**: Mã giảm giá
+- **LoyaltyPoints**: Điểm tích lũy
+- **LoyaltyPointHistories**: Lịch sử điểm
+- **Blogs**: Bài viết blog
+- **BlogComments**: Bình luận blog
 - **OtpVerifications**: Xác thực OTP
 
 ## 🚀 Cài Đặt & Chạy Dự Án
@@ -166,8 +260,8 @@ Exe_Demo/
 
 1. **Clone repository**
 ```bash
-git clone https://github.com/yourusername/Exe_Demo.git
-cd Exe_Demo
+git clone https://github.com/Tien263/MocViStore.git
+cd MocViStore
 ```
 
 2. **Cấu hình Database**
@@ -281,18 +375,30 @@ dotnet run
 - [Quick Start AI Chat](QUICK_START_AI_CHAT.md) - Hướng dẫn nhanh
 - [Implementation Summary](AI_CHAT_IMPLEMENTATION_SUMMARY.md) - Tóm tắt triển khai
 
+## 🎯 Tính Năng Đã Hoàn Thành
+
+- [x] ~~Voucher và khuyến mãi~~ ✅
+- [x] ~~Admin dashboard~~ ✅
+- [x] ~~Báo cáo thống kê~~ ✅
+- [x] ~~Quản lý đơn hàng~~ ✅
+- [x] ~~Excel Export/Import~~ ✅
+- [x] ~~Điểm tích lũy~~ ✅
+- [x] ~~AI Chatbot~~ ✅
+- [x] ~~Google OAuth~~ ✅
+- [x] ~~Email Service~~ ✅
+
 ## 🎯 Tính Năng Sắp Tới
 
 - [ ] Thanh toán online (VNPay, Momo)
-- [ ] Quản lý đơn hàng
-- [ ] Theo dõi vận chuyển
+- [ ] Theo dõi vận chuyển real-time
 - [ ] Đánh giá và review sản phẩm
 - [ ] Wishlist
-- [ ] Voucher và khuyến mãi
-- [ ] Admin dashboard
-- [ ] Báo cáo thống kê
+- [ ] Notification system
+- [ ] Mobile app (React Native)
 - [ ] Voice chat với AI
 - [ ] Multi-language AI support
+- [ ] Analytics dashboard nâng cao
+- [ ] Inventory management
 
 ## 📸 Screenshots
 
