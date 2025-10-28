@@ -38,9 +38,16 @@ builder.Services.AddAuthentication(options =>
     })
     .AddGoogle(options =>
     {
-        options.ClientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
-        options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
-        options.CallbackPath = "/signin-google";
+        var clientId = builder.Configuration["Authentication:Google:ClientId"] ?? "";
+        var clientSecret = builder.Configuration["Authentication:Google:ClientSecret"] ?? "";
+        
+        // Log configuration for debugging
+        Console.WriteLine($"Google OAuth ClientId configured: {!string.IsNullOrEmpty(clientId)}");
+        Console.WriteLine($"Google OAuth ClientSecret configured: {!string.IsNullOrEmpty(clientSecret)}");
+        
+        options.ClientId = clientId;
+        options.ClientSecret = clientSecret;
+        options.CallbackPath = new PathString("/signin-google");
         options.SaveTokens = true;
         
         // Handle all OAuth failures gracefully
