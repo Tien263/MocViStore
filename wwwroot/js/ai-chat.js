@@ -5,9 +5,10 @@
 
 class AIChatWidget {
     constructor() {
-        // API Configuration - Thay đổi URL này khi deploy AI server
-        this.apiUrl = 'http://localhost:8000/api/chat';
-        this.healthUrl = 'http://localhost:8000/api/health';
+        // API Configuration - Will be loaded from server
+        this.baseUrl = null;
+        this.apiUrl = null;
+        this.healthUrl = null;
         
         this.isOpen = false;
         this.isTyping = false;
@@ -16,13 +17,31 @@ class AIChatWidget {
         this.init();
     }
     
-    init() {
+    async init() {
+        // Load AI API URL from server configuration
+        await this.loadAIConfig();
+        
         this.createWidget();
         this.attachEventListeners();
         this.checkAIHealth();
         
         // Load chat history from localStorage
         this.loadChatHistory();
+    }
+    
+    async loadAIConfig() {
+        try {
+            const response = await fetch('/Home/GetAIConfig');
+            const config = await response.json();
+            this.baseUrl = config.apiUrl;
+            this.apiUrl = `${this.baseUrl}/api/chat`;
+            this.healthUrl = `${this.baseUrl}/api/health`;
+        } catch (error) {
+            console.error('Failed to load AI config, using default:', error);
+            this.baseUrl = 'http://localhost:8000';
+            this.apiUrl = 'http://localhost:8000/api/chat';
+            this.healthUrl = 'http://localhost:8000/api/health';
+        }
     }
     
     createWidget() {
