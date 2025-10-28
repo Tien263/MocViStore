@@ -43,20 +43,38 @@ builder.Services.AddAuthentication(options =>
         options.CallbackPath = "/signin-google";
         options.SaveTokens = true;
         
-        // Handle correlation failures
+        // Handle all OAuth failures gracefully
         options.Events.OnRemoteFailure = context =>
         {
-            if (context.Failure?.Message.Contains("Correlation failed") == true)
+            var errorMessage = context.Failure?.Message ?? "Unknown error";
+            
+            // Log the error for debugging
+            Console.WriteLine($"Google OAuth Error: {errorMessage}");
+            
+            // Redirect to login with error message
+            if (errorMessage.Contains("Correlation failed") || 
+                errorMessage.Contains("state") ||
+                errorMessage.Contains("redirect_uri"))
             {
-                context.Response.Redirect("/Auth/Login?error=correlation");
-                context.HandleResponse();
+                context.Response.Redirect("/Auth/Login?error=oauth_failed");
             }
+            else
+            {
+                context.Response.Redirect("/Auth/Login?error=external_login");
+            }
+            
+            context.HandleResponse();
             return Task.CompletedTask;
         };
         
-        // Improve cookie settings
+        // Production-ready cookie settings
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.CorrelationCookie.IsEssential = true;
+        
+        // Add required scopes
+        options.Scope.Add("profile");
+        options.Scope.Add("email");
     });
 
 // Add Session

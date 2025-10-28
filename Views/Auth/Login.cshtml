@@ -377,11 +377,9 @@
             </div>
 
             <div class="social-login">
-                @* Tạm thời tắt Google login
                 <a href="@Url.Action("ExternalLogin", "Auth", new { provider = "Google", returnUrl = ViewData["ReturnUrl"] })" class="btn-social btn-google">
                     <i class="fab fa-google"></i> Google
                 </a>
-                *@
                 <button class="btn-social btn-facebook" onclick="loginWithFacebook()">
                     <i class="fab fa-facebook-f"></i> Facebook
                 </button>
