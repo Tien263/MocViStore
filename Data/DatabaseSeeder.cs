@@ -87,21 +87,7 @@ public static class DatabaseSeeder
         };
         context.Products.AddRange(products);
 
-        // Seed Admin User
-        var admin = new User
-        {
-            UserId = 1,
-            Username = "admin",
-            Email = "admin@mocvistore.com",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
-            FullName = "Administrator",
-            Role = "Admin",
-            IsActive = true,
-            CreatedAt = DateTime.Now
-        };
-        context.Users.Add(admin);
-
         context.SaveChanges();
-        Console.WriteLine("Database seeded successfully!");
+        Console.WriteLine("Database seeded successfully with categories and products!");
     }
 }
