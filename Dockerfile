@@ -16,7 +16,6 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 # Set environment
-ENV ASPNETCORE_URLS=http://+:$PORT
 ENV ASPNETCORE_ENVIRONMENT=Production
 
 ENTRYPOINT ["dotnet", "Exe_Demo.dll"]
