@@ -16,9 +16,24 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add DbContext
+// Add DbContext - Use SQLite in production if SQL Server not configured
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    if (string.IsNullOrEmpty(connectionString) || builder.Environment.IsProduction())
+    {
+        // Use SQLite for production/when SQL Server not available
+        var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "mocvistore.db");
+        options.UseSqlite($"Data Source={dbPath}");
+        Console.WriteLine($"Using SQLite database at: {dbPath}");
+    }
+    else
+    {
+        // Use SQL Server for development
+        options.UseSqlServer(connectionString);
+        Console.WriteLine("Using SQL Server database");
+    }
+});
 
 // Add Email Service
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -102,6 +117,22 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 
 var app = builder.Build();
+
+// Ensure database is created and migrated
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+        context.Database.EnsureCreated();
+        Console.WriteLine("Database initialized successfully");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error initializing database: {ex.Message}");
+    }
+}
 
 // Use forwarded headers FIRST
 app.UseForwardedHeaders();
