@@ -51,8 +51,16 @@ namespace Exe_Demo.Controllers
                     .Include(u => u.Employee)
                     .FirstOrDefaultAsync(u => u.Email == model.Email && u.PasswordHash == passwordHash);
 
-                if (user != null && user.IsActive == true)
+                if (user != null)
                 {
+                    // Check if user is not active (pending OTP verification)
+                    if (user.IsActive == false)
+                    {
+                        TempData["Email"] = user.Email;
+                        TempData["ErrorMessage"] = "Tài khoản chưa được kích hoạt. Vui lòng xác thực OTP.";
+                        return RedirectToAction(nameof(ResendOtp));
+                    }
+
                     // Tạo claims
                     var claims = new List<Claim>
                     {
@@ -494,6 +502,73 @@ namespace Exe_Demo.Controllers
 
             TempData["SuccessMessage"] = "Hoàn tất đăng ký! Chào mừng bạn đến với Mộc Vị Store.";
             return RedirectToAction("Index", "Home");
+        }
+
+        // GET: Auth/ResendOtp
+        [HttpGet]
+        public IActionResult ResendOtp()
+        {
+            var email = TempData["Email"]?.ToString();
+            if (string.IsNullOrEmpty(email))
+            {
+                return RedirectToAction(nameof(Login));
+            }
+
+            TempData.Keep("Email");
+            ViewBag.Email = email;
+            return View();
+        }
+
+        // POST: Auth/ResendOtp
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResendOtp(string email)
+        {
+            if (string.IsNullOrEmpty(email))
+            {
+                TempData["ErrorMessage"] = "Email không hợp lệ.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Kiểm tra user tồn tại và chưa active
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive == false);
+            if (user == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy tài khoản hoặc tài khoản đã được kích hoạt.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Tạo mã OTP mới
+            var otpCode = new Random().Next(100000, 999999).ToString();
+
+            // Lưu OTP vào database
+            var otpVerification = new OtpVerification
+            {
+                Email = email,
+                OtpCode = otpCode,
+                CreatedAt = DateTime.Now,
+                ExpiresAt = DateTime.Now.AddMinutes(5),
+                IsUsed = false
+            };
+            _context.OtpVerifications.Add(otpVerification);
+            await _context.SaveChangesAsync();
+
+            // Gửi email OTP
+            try
+            {
+                await _emailService.SendOtpEmailAsync(email, otpCode, user.FullName);
+                _logger.LogInformation($"OTP resent to {email}");
+                
+                TempData["Email"] = email;
+                TempData["SuccessMessage"] = "Mã OTP mới đã được gửi đến email của bạn!";
+                return RedirectToAction(nameof(VerifyOtp));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error resending OTP email: {ex.Message}");
+                TempData["ErrorMessage"] = "Lỗi gửi email. Vui lòng thử lại sau.";
+                return View();
+            }
         }
 
         // Helper methods
