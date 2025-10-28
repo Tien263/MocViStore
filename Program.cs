@@ -16,22 +16,32 @@ builder.WebHost.ConfigureKestrel(options =>
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-// Add DbContext - Use SQLite when SQL Server not configured
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+// Add DbContext - Use SQLite in Production, SQL Server in Development
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
-    // Use SQLite if no connection string provided
-    if (string.IsNullOrEmpty(connectionString))
+    if (builder.Environment.IsProduction())
     {
+        // Always use SQLite in Production
         var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "mocvistore.db");
         options.UseSqlite($"Data Source={dbPath}");
         Console.WriteLine($"Using SQLite database at: {dbPath}");
     }
     else
     {
-        // Use SQL Server when connection string is provided
-        options.UseSqlServer(connectionString);
-        Console.WriteLine("Using SQL Server database");
+        // Use SQL Server in Development
+        var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        if (!string.IsNullOrEmpty(connectionString))
+        {
+            options.UseSqlServer(connectionString);
+            Console.WriteLine("Using SQL Server database");
+        }
+        else
+        {
+            // Fallback to SQLite if no connection string in Development
+            var dbPath = Path.Combine(Directory.GetCurrentDirectory(), "mocvistore.db");
+            options.UseSqlite($"Data Source={dbPath}");
+            Console.WriteLine($"Using SQLite database at: {dbPath}");
+        }
     }
 });
 
