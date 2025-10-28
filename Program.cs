@@ -127,9 +127,6 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.EnsureCreated();
         Console.WriteLine("Database initialized successfully");
-        
-        // Seed initial data
-        DatabaseSeeder.SeedData(context);
     }
     catch (Exception ex)
     {
