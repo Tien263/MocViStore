@@ -224,7 +224,14 @@ class AIChatWidget {
     }
     
     async checkAIHealth() {
+        // Skip health check if AI is disabled
+        if (!this.aiEnabled || !this.healthUrl) {
+            console.log('AI health check skipped - AI is disabled');
+            return;
+        }
+        
         const statusElement = document.getElementById('aiChatStatus');
+        if (!statusElement) return; // Element doesn't exist if widget is disabled
         
         try {
             const response = await fetch(this.healthUrl);

@@ -294,7 +294,13 @@
     <script src="~/js/jquery.animateNumber.min.js"></script>
     <script src="~/js/scrollax.min.js"></script>
     <script src="~/js/main.js"></script>
-    <script src="~/js/ai-chat.js?v=@DateTime.Now.Ticks"></script>
+    @{
+        var aiApiUrl = Configuration["AI:ApiUrl"];
+        if (!string.IsNullOrEmpty(aiApiUrl))
+        {
+            <script src="~/js/ai-chat.js?v=@DateTime.Now.Ticks"></script>
+        }
+    }
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>
