@@ -28,7 +28,7 @@ COPY Trainning_AI ./Trainning_AI
 
 # Install minimal Python deps
 WORKDIR /app/Trainning_AI
-RUN pip3 install --no-cache-dir fastapi uvicorn requests google-generativeai pydantic
+RUN pip3 install --no-cache-dir --break-system-packages fastapi uvicorn requests google-generativeai pydantic
 
 WORKDIR /app
 
