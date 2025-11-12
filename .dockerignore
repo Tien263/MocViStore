@@ -1,0 +1,14 @@
+bin/
+obj/
+.vs/
+.vscode/
+*.user
+*.suo
+Trainning_AI/venv/
+Trainning_AI/__pycache__/
+**/__pycache__/
+*.pyc
+*.db
+*.log
+node_modules/
+.git/
