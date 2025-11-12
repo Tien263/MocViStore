@@ -2,26 +2,11 @@ services:
   # ASP.NET Core Web Application
   - type: web
     name: mocvistore
-    env: dotnet
+    runtime: dotnet
     region: singapore
     plan: free
-    buildCommand: |
-      echo "Building ASP.NET Core application..."
-      dotnet publish -c Release -o out
-      
-      echo "Installing Python dependencies for AI service..."
-      cd Trainning_AI
-      pip install -r requirements.txt
-      cd ..
-    startCommand: |
-      # Start AI service in background
-      cd Trainning_AI && uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-      
-      # Wait for AI service to start
-      sleep 5
-      
-      # Start ASP.NET Core application
-      cd .. && dotnet out/Exe_Demo.dll
+    buildCommand: dotnet publish -c Release -o out && cd Trainning_AI && pip3 install -r requirements.txt
+    startCommand: cd Trainning_AI && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 & sleep 3 && cd .. && dotnet out/Exe_Demo.dll
     envVars:
       # ASP.NET Core Settings
       - key: ASPNETCORE_ENVIRONMENT
