@@ -272,10 +272,10 @@
     </div>
     
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+    <nav class="navbar navbar-expand-lg navbar-light ftco_navbar bg-white ftco-navbar-light shadow-sm" id="ftco-navbar">
         <div class="container">
             <a class="navbar-brand" asp-controller="Home" asp-action="Index">
-                <img src="~/images/logo_1.png" alt="Mộc Vị Logo" class="navbar-logo" style="max-height: 50px;">
+                <img src="~/images/logo_1_1.png" alt="Mộc Vị Logo" class="navbar-logo" style="max-height: 50px;">
             </a>
 
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
@@ -305,6 +305,14 @@
                         <a asp-controller="Staff" asp-action="Orders" class="nav-link">
                             <i class="fa fa-shopping-cart"></i>
                             <span>Đơn Hàng</span>
+                        </a>
+                    </li>
+                    
+                    <!-- Lịch Sử Chat AI -->
+                    <li class="nav-item">
+                        <a asp-controller="AdminChatHistory" asp-action="Index" class="nav-link">
+                            <i class="fa fa-comments"></i>
+                            <span>Chat AI</span>
                         </a>
                     </li>
                     

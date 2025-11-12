@@ -50,50 +50,92 @@ namespace Exe_Demo.Controllers
         [HttpPost]
         public async Task<IActionResult> AddToCart(int productId, int quantity = 1)
         {
-            var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            try
             {
-                return Json(new { success = false, message = "Vui lòng đăng nhập!" });
-            }
-
-            // Get customer ID from user
-            var user = await _context.Users.FindAsync(userId);
-            if (user == null || user.CustomerId == null)
-            {
-                return Json(new { success = false, message = "Vui lòng đăng nhập!" });
-            }
-
-            var product = await _context.Products.FindAsync(productId);
-            if (product == null)
-            {
-                return Json(new { success = false, message = "Sản phẩm không tồn tại!" });
-            }
-
-            // Check if product already in cart
-            var existingCart = await _context.Carts
-                .FirstOrDefaultAsync(c => c.CustomerId == user.CustomerId && c.ProductId == productId);
-
-            if (existingCart != null)
-            {
-                // Update quantity
-                existingCart.Quantity += quantity;
-            }
-            else
-            {
-                // Add new cart item
-                var cart = new Cart
+                _logger.LogInformation($"AddToCart called with productId: {productId}, quantity: {quantity}");
+                
+                // Check product exists
+                var product = await _context.Products.FindAsync(productId);
+                
+                _logger.LogInformation($"Product found: {product != null}, ProductId in DB: {product?.ProductId}");
+                
+                if (product == null)
                 {
-                    CustomerId = user.CustomerId,
-                    ProductId = productId,
-                    Quantity = quantity,
-                    CreatedDate = DateTime.Now
-                };
-                _context.Carts.Add(cart);
+                    // Try to find all products to debug
+                    var allProducts = await _context.Products.Select(p => p.ProductId).ToListAsync();
+                    _logger.LogWarning($"Product {productId} not found. Available products: {string.Join(", ", allProducts)}");
+                    
+                    return Json(new { success = false, message = $"Sản phẩm không tồn tại! (ID: {productId})" });
+                }
+
+                // Check stock
+                if (product.StockQuantity < quantity)
+                {
+                    return Json(new { success = false, message = $"Chỉ còn {product.StockQuantity} sản phẩm!" });
+                }
+
+                // Get customer ID or session ID
+                int? customerId = null;
+                string? sessionId = null;
+
+                var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out int userId))
+                {
+                    var user = await _context.Users.FindAsync(userId);
+                    customerId = user?.CustomerId;
+                }
+
+                if (customerId == null)
+                {
+                    // Guest user - use session
+                    sessionId = HttpContext.Session.GetString("CartSessionId");
+                    if (string.IsNullOrEmpty(sessionId))
+                    {
+                        sessionId = Guid.NewGuid().ToString();
+                        HttpContext.Session.SetString("CartSessionId", sessionId);
+                    }
+                }
+
+                // Check if product already in cart
+                var existingCart = await _context.Carts
+                    .FirstOrDefaultAsync(c => 
+                        (customerId.HasValue && c.CustomerId == customerId) ||
+                        (!customerId.HasValue && c.SessionId == sessionId && c.ProductId == productId));
+
+                if (existingCart != null)
+                {
+                    // Update quantity
+                    existingCart.Quantity += quantity;
+                    
+                    // Check stock again
+                    if (existingCart.Quantity > product.StockQuantity)
+                    {
+                        return Json(new { success = false, message = $"Chỉ còn {product.StockQuantity} sản phẩm!" });
+                    }
+                }
+                else
+                {
+                    // Add new cart item
+                    var cart = new Cart
+                    {
+                        CustomerId = customerId,
+                        SessionId = sessionId,
+                        ProductId = productId,
+                        Quantity = quantity,
+                        CreatedDate = DateTime.Now
+                    };
+                    _context.Carts.Add(cart);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, message = "Đã thêm vào giỏ hàng!" });
             }
-
-            await _context.SaveChangesAsync();
-
-            return Json(new { success = true, message = "Đã thêm vào giỏ hàng!" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error adding to cart");
+                return Json(new { success = false, message = "Có lỗi xảy ra. Vui lòng thử lại!" });
+            }
         }
 
         [HttpPost]
@@ -490,6 +532,40 @@ namespace Exe_Demo.Controllers
             ViewBag.BankBranch = _configuration["BankTransfer:BankBranch"];
 
             return View(order);
+        }
+        
+        // Debug endpoint to check products
+        [HttpGet]
+        public async Task<IActionResult> DebugProducts()
+        {
+            var products = await _context.Products
+                .Select(p => new { 
+                    p.ProductId, 
+                    p.ProductName, 
+                    p.Price, 
+                    p.StockQuantity 
+                })
+                .ToListAsync();
+                
+            return Json(new { 
+                count = products.Count, 
+                products = products 
+            });
+        }
+        
+        // Test add to cart with specific product
+        [HttpGet]
+        public async Task<IActionResult> TestAddToCart(int productId)
+        {
+            var product = await _context.Products.FindAsync(productId);
+            
+            return Json(new {
+                productId = productId,
+                found = product != null,
+                productName = product?.ProductName,
+                price = product?.Price,
+                stock = product?.StockQuantity
+            });
         }
     }
 }

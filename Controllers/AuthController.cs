@@ -17,12 +17,14 @@ namespace Exe_Demo.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<AuthController> _logger;
         private readonly IEmailService _emailService;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(ApplicationDbContext context, ILogger<AuthController> logger, IEmailService emailService)
+        public AuthController(ApplicationDbContext context, ILogger<AuthController> logger, IEmailService emailService, IConfiguration configuration)
         {
             _context = context;
             _logger = logger;
             _emailService = emailService;
+            _configuration = configuration;
         }
 
         // GET: Auth/Login
@@ -293,6 +295,17 @@ namespace Exe_Demo.Controllers
         [HttpGet]
         public IActionResult ExternalLogin(string provider, string? returnUrl = null)
         {
+            // Check if Google OAuth is configured
+            if (provider == "Google")
+            {
+                var googleClientId = _configuration["Authentication:Google:ClientId"];
+                if (string.IsNullOrEmpty(googleClientId))
+                {
+                    TempData["ErrorMessage"] = "Google login chưa được cấu hình. Vui lòng đăng nhập bằng tài khoản thông thường.";
+                    return RedirectToAction(nameof(Login));
+                }
+            }
+            
             var redirectUrl = Url.Action(nameof(ExternalLoginCallback), "Auth", new { returnUrl });
             var properties = new AuthenticationProperties
             {
@@ -305,82 +318,100 @@ namespace Exe_Demo.Controllers
         [HttpGet]
         public async Task<IActionResult> ExternalLoginCallback(string? returnUrl = null, string? remoteError = null)
         {
-            if (remoteError != null)
+            try
             {
-                TempData["ErrorMessage"] = $"Lỗi từ Google: {remoteError}";
+                if (remoteError != null)
+                {
+                    _logger.LogWarning($"Remote error from Google: {remoteError}");
+                    TempData["ErrorMessage"] = $"Lỗi từ Google: {remoteError}";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                // Use "Google" scheme instead of Cookie scheme to get external login info
+                var info = await HttpContext.AuthenticateAsync("Google");
+                if (info?.Principal == null || !info.Succeeded)
+                {
+                    _logger.LogWarning("External authentication failed or no principal found");
+                    TempData["ErrorMessage"] = "Không thể lấy thông tin từ Google. Vui lòng thử lại.";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                // Lấy thông tin từ Google
+                var email = info.Principal.FindFirstValue(ClaimTypes.Email);
+                var name = info.Principal.FindFirstValue(ClaimTypes.Name);
+                var googleId = info.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                _logger.LogInformation($"Google login attempt for email: {email}");
+
+                if (string.IsNullOrEmpty(email))
+                {
+                    _logger.LogWarning("Email is null or empty from Google");
+                    TempData["ErrorMessage"] = "Không thể lấy email từ Google.";
+                    return RedirectToAction(nameof(Login));
+                }
+
+                // Kiểm tra user đã tồn tại chưa
+                var user = await _context.Users
+                    .Include(u => u.Customer)
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
+                if (user == null)
+                {
+                    _logger.LogInformation($"New Google user, redirecting to CompleteProfile: {email}");
+                    // User mới từ Google → Redirect đến trang nhập thông tin
+                    TempData["GoogleEmail"] = email;
+                    TempData["GoogleName"] = name ?? email;
+                    TempData["GoogleId"] = googleId;
+                    return RedirectToAction(nameof(CompleteProfile));
+                }
+
+                _logger.LogInformation($"Existing user found, signing in: {email}");
+
+                // Tạo claims và đăng nhập
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                    new Claim(ClaimTypes.Name, user.FullName),
+                    new Claim(ClaimTypes.Email, user.Email),
+                    new Claim(ClaimTypes.Role, user.Role ?? "Customer")
+                };
+
+                if (user.CustomerId.HasValue)
+                {
+                    claims.Add(new Claim("CustomerId", user.CustomerId.Value.ToString()));
+                }
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
+                };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                // Cập nhật last login
+                user.LastLoginDate = DateTime.Now;
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"User {user.Email} logged in via Google successfully.");
+
+                // Redirect
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in ExternalLoginCallback: {ex.Message}\n{ex.StackTrace}");
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi đăng nhập bằng Google. Vui lòng thử lại.";
                 return RedirectToAction(nameof(Login));
             }
-
-            var info = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            if (info?.Principal == null)
-            {
-                TempData["ErrorMessage"] = "Không thể lấy thông tin từ Google.";
-                return RedirectToAction(nameof(Login));
-            }
-
-            // Lấy thông tin từ Google
-            var email = info.Principal.FindFirstValue(ClaimTypes.Email);
-            var name = info.Principal.FindFirstValue(ClaimTypes.Name);
-            var googleId = info.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
-
-            if (string.IsNullOrEmpty(email))
-            {
-                TempData["ErrorMessage"] = "Không thể lấy email từ Google.";
-                return RedirectToAction(nameof(Login));
-            }
-
-            // Kiểm tra user đã tồn tại chưa
-            var user = await _context.Users
-                .Include(u => u.Customer)
-                .FirstOrDefaultAsync(u => u.Email == email);
-
-            if (user == null)
-            {
-                // User mới từ Google → Redirect đến trang nhập thông tin
-                TempData["GoogleEmail"] = email;
-                TempData["GoogleName"] = name ?? email;
-                TempData["GoogleId"] = googleId;
-                return RedirectToAction(nameof(CompleteProfile));
-            }
-
-            // Tạo claims và đăng nhập
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
-                new Claim(ClaimTypes.Name, user.FullName),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role ?? "Customer")
-            };
-
-            if (user.CustomerId.HasValue)
-            {
-                claims.Add(new Claim("CustomerId", user.CustomerId.Value.ToString()));
-            }
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true,
-                ExpiresUtc = DateTimeOffset.UtcNow.AddDays(30)
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
-
-            // Cập nhật last login
-            user.LastLoginDate = DateTime.Now;
-            await _context.SaveChangesAsync();
-
-            _logger.LogInformation($"User {user.Email} logged in via Google.");
-
-            // Redirect
-            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
-            {
-                return Redirect(returnUrl);
-            }
-            return RedirectToAction("Index", "Home");
         }
 
         // GET: Auth/CompleteProfile

@@ -36,7 +36,117 @@ class LLMService:
         
         print("[WARNING] Khong co AI API key. Su dung che do simple response.")
     
-    def generate_response(self, query: str, context: List[Dict], conversation_history: List[Dict] = None) -> str:
+    def detect_purchase_intent(self, query: str) -> Dict:
+        """Phát hiện ý định mua hàng từ câu hỏi"""
+        query_lower = query.lower()
+        
+        # Keywords for purchase intent
+        purchase_keywords = ['mua', 'đặt', 'order', 'thêm vào giỏ', 'cho vào giỏ', 'lấy', 'gói']
+        quantity_keywords = ['gói', 'cái', 'hộp', 'kg', 'gram']
+        
+        # Check if query contains purchase intent
+        has_purchase_intent = any(keyword in query_lower for keyword in purchase_keywords)
+        
+        if not has_purchase_intent:
+            return {'is_purchase': False}
+        
+        # Extract product names and quantities using Gemini if available
+        if self.gemini_model:
+            try:
+                prompt = f"""Phân tích câu sau để trích xuất thông tin đặt hàng:
+"{query}"
+
+Trả về JSON format:
+{{
+    "is_purchase": true/false,
+    "products": [
+        {{"name": "tên sản phẩm chính xác", "quantity": số lượng}}
+    ]
+}}
+
+Danh sách sản phẩm có sẵn (TÊN CHÍNH XÁC):
+- Dâu Sấy Dẻo (hoặc Dâu tây sấy dẻo)
+- Dâu Sấy Thăng Hoa
+- Mận Sấy Dẻo
+- Xoài Sấy Dẻo
+- Đào Sấy Dẻo
+- Hồng Sấy Dẻo
+- Mít Sấy Dẻo
+- Chuối Sấy Giòn
+- Sữa Chua Sấy
+
+LƯU Ý: Trả về tên CHÍNH XÁC như trên, ví dụ "Dâu Sấy Dẻo" chứ KHÔNG phải "dâu tây sấy dẻo"
+
+CHỈ trả về JSON, không giải thích gì thêm."""
+
+                response = self.gemini_model.generate_content(
+                    prompt,
+                    generation_config={"temperature": 0.1, "max_output_tokens": 200}
+                )
+                
+                # Parse JSON response
+                import json
+                import re
+                text = response.text.strip()
+                # Extract JSON from markdown code blocks if present
+                json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', text, re.DOTALL)
+                if json_match:
+                    text = json_match.group(1)
+                
+                result = json.loads(text)
+                return result
+                
+            except Exception as e:
+                print(f"[WARNING] Purchase intent detection error: {e}")
+        
+        # Fallback: Simple regex-based extraction
+        import re
+        
+        # Try to find quantity and product name
+        products = []
+        
+        # Pattern: số + gói/cái + tên sản phẩm
+        patterns = [
+            r'(\d+)\s*(?:gói|cái|hộp)?\s*(dâu\s*tây\s*sấy\s*dẻo|dâu\s*tây|dâu\s*sấy)',
+            r'(\d+)\s*(?:gói|cái|hộp)?\s*(mận\s*sấy|mận)',
+            r'(\d+)\s*(?:gói|cái|hộp)?\s*(xoài\s*sấy|xoài)',
+        ]
+        
+        for pattern in patterns:
+            match = re.search(pattern, query_lower)
+            if match:
+                quantity = int(match.group(1))
+                product_raw = match.group(2)
+                
+                # Map to exact product name (match database names)
+                if 'dâu' in product_raw:
+                    product_name = 'Dâu Sấy Dẻo'
+                elif 'mận' in product_raw:
+                    product_name = 'Mận Sấy Dẻo'
+                elif 'xoài' in product_raw:
+                    product_name = 'Xoài Sấy Dẻo'
+                elif 'đào' in product_raw:
+                    product_name = 'Đào Sấy Dẻo'
+                elif 'hồng' in product_raw:
+                    product_name = 'Hồng Sấy Dẻo'
+                elif 'mít' in product_raw:
+                    product_name = 'Mít Sấy Dẻo'
+                elif 'chuối' in product_raw:
+                    product_name = 'Chuối Sấy Giòn'
+                elif 'sữa' in product_raw:
+                    product_name = 'Sữa Chua Sấy'
+                else:
+                    product_name = product_raw
+                
+                products.append({'name': product_name, 'quantity': quantity})
+                break
+        
+        if products:
+            return {'is_purchase': True, 'products': products}
+        
+        return {'is_purchase': False}
+    
+    def generate_response(self, query: str, context: List[Dict], conversation_history: List[Dict] = None, purchase_intent: Dict = None) -> str:
         """Tạo câu trả lời dựa trên query, context và conversation history"""
         # Check for casual conversation first (greetings, thanks, etc.)
         casual_response = self._handle_casual_conversation(query)

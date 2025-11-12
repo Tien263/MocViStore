@@ -1,0 +1,65 @@
+services:
+  # ASP.NET Core Web Application
+  - type: web
+    name: mocvistore
+    env: dotnet
+    region: singapore
+    plan: free
+    buildCommand: |
+      echo "Building ASP.NET Core application..."
+      dotnet publish -c Release -o out
+      
+      echo "Installing Python dependencies for AI service..."
+      cd Trainning_AI
+      pip install -r requirements.txt
+      cd ..
+    startCommand: |
+      # Start AI service in background
+      cd Trainning_AI && uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+      
+      # Wait for AI service to start
+      sleep 5
+      
+      # Start ASP.NET Core application
+      cd .. && dotnet out/Exe_Demo.dll
+    envVars:
+      # ASP.NET Core Settings
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      
+      - key: ASPNETCORE_URLS
+        value: http://0.0.0.0:$PORT
+      
+      - key: ASPNETCORE_FORWARDEDHEADERS_ENABLED
+        value: true
+      
+      # AI Service URL (localhost vì chạy cùng service)
+      - key: AI__ApiUrl
+        value: http://localhost:8000
+      
+      # Google OAuth (Cần thêm thủ công trên Render Dashboard)
+      - key: Authentication__Google__ClientId
+        sync: false
+      
+      - key: Authentication__Google__ClientSecret
+        sync: false
+      
+      # Email Settings (Cần thêm thủ công)
+      - key: EmailSettings__SmtpServer
+        value: smtp.gmail.com
+      
+      - key: EmailSettings__SmtpPort
+        value: 587
+      
+      - key: EmailSettings__SenderEmail
+        sync: false
+      
+      - key: EmailSettings__SenderPassword
+        sync: false
+      
+      - key: EmailSettings__SenderName
+        value: Mộc Vị Store
+      
+      # Gemini API Key cho AI (Cần thêm thủ công)
+      - key: GEMINI_API_KEY
+        sync: false

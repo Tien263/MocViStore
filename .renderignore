@@ -1,0 +1,41 @@
+# Render Ignore File
+# Các file/folder này sẽ không được upload lên Render
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Build output
+bin/
+obj/
+
+# Python
+Trainning_AI/venv/
+Trainning_AI/__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+*.mdf
+*.ldf
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Node modules (nếu có)
+node_modules/
+
+# Git
+.git/
+.gitignore
