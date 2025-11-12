@@ -1,41 +1,45 @@
-# Stage 1: Build .NET application
+# Use .NET 8.0 runtime with Python
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-WORKDIR /app
+WORKDIR /src
 
-# Copy csproj and restore dependencies
+# Copy and restore .NET project
 COPY *.csproj ./
 RUN dotnet restore
 
-# Copy everything else and build
+# Copy source and build
 COPY . ./
-RUN dotnet publish -c Release -o out
+RUN dotnet publish -c Release -o /app/publish
 
-# Stage 2: Runtime with Python for AI service
+# Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
 
-# Install Python
+# Install Python (lightweight)
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip python3-venv && \
+    apt-get install -y --no-install-recommends python3 python3-pip && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy published app
-COPY --from=build /app/out .
+# Copy .NET app
+COPY --from=build /app/publish .
 
 # Copy AI service
 COPY Trainning_AI ./Trainning_AI
 
-# Install Python dependencies
+# Install minimal Python deps
 WORKDIR /app/Trainning_AI
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir fastapi uvicorn requests google-generativeai pydantic
 
-# Back to app directory
 WORKDIR /app
 
-# Expose port
-EXPOSE 8080
+# Start script
+COPY <<EOF /app/start.sh
+#!/bin/bash
+cd /app/Trainning_AI && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+sleep 3
+cd /app && dotnet Exe_Demo.dll
+EOF
 
-# Start both services
-CMD cd Trainning_AI && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 & \
-    sleep 5 && \
-    dotnet Exe_Demo.dll --urls=http://0.0.0.0:8080
+RUN chmod +x /app/start.sh
+
+CMD ["/app/start.sh"]
