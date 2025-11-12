@@ -9,6 +9,7 @@ class AIChatWidget {
         this.baseUrl = null;
         this.apiUrl = null;
         this.healthUrl = null;
+        this.aiEnabled = false;
         
         this.isOpen = false;
         this.isTyping = false;
@@ -33,6 +34,12 @@ class AIChatWidget {
         // Load AI API URL from server configuration
         await this.loadAIConfig();
         
+        // Only create widget if AI is enabled
+        if (!this.aiEnabled) {
+            console.log('AI Chat widget disabled');
+            return;
+        }
+        
         this.createWidget();
         this.attachEventListeners();
         this.checkAIHealth();
@@ -45,14 +52,21 @@ class AIChatWidget {
         try {
             const response = await fetch('/Home/GetAIConfig');
             const config = await response.json();
+            
+            // If AI URL is empty, disable AI chat
+            if (!config.apiUrl || config.apiUrl.trim() === '') {
+                console.log('AI Chat is disabled - no API URL configured');
+                this.aiEnabled = false;
+                return;
+            }
+            
             this.baseUrl = config.apiUrl;
             this.apiUrl = `${this.baseUrl}/api/chat`;
             this.healthUrl = `${this.baseUrl}/api/health`;
+            this.aiEnabled = true;
         } catch (error) {
-            console.error('Failed to load AI config, using default:', error);
-            this.baseUrl = 'http://localhost:8000';
-            this.apiUrl = 'http://localhost:8000/api/chat';
-            this.healthUrl = 'http://localhost:8000/api/health';
+            console.error('Failed to load AI config, disabling AI chat:', error);
+            this.aiEnabled = false;
         }
     }
     

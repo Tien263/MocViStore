@@ -182,6 +182,10 @@ using (var scope = app.Services.CreateScope())
         var context = services.GetRequiredService<ApplicationDbContext>();
         context.Database.EnsureCreated();
         Console.WriteLine("Database initialized successfully");
+        
+        // Seed data
+        await Exe_Demo.Database.SeedData.SeedAsync(context);
+        Console.WriteLine("Database seeded successfully");
     }
     catch (Exception ex)
     {
