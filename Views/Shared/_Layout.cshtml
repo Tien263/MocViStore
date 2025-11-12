@@ -297,9 +297,14 @@
     <script src="~/js/main.js"></script>
     @{
         var aiApiUrl = Configuration["AI:ApiUrl"];
-        if (!string.IsNullOrEmpty(aiApiUrl))
+        if (!string.IsNullOrEmpty(aiApiUrl?.Trim()))
         {
             <script src="~/js/ai-chat.js?v=@DateTime.Now.Ticks"></script>
+        }
+        else 
+        {
+            <!-- AI Chat is disabled - load cleanup script -->
+            <script src="~/js/ai-chat-disabled.js?v=@DateTime.Now.Ticks"></script>
         }
     }
     
