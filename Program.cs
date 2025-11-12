@@ -216,4 +216,11 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+// Health check endpoint for keeping Render awake
+app.MapGet("/health", () => new { 
+    status = "healthy", 
+    timestamp = DateTime.UtcNow,
+    message = "MocViStore is running"
+});
+
 app.Run();
